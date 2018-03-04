@@ -15,16 +15,6 @@ VAR_2="variable 2"
 
 
 
-# Standard Show help function
-#
-help(){
-  echo "ERROR: Wrong or unrecognized parameter received: $1"
-  echo "USAGE:"
-  echo "$0 [option_1|option_n]"
-}
-
-
-
 # Document what this function does
 #
 option_1(){
@@ -48,6 +38,13 @@ echo "Hello world"
 }
 
 
+# Standard Show help function
+#
+help(){
+  echo "ERROR: Wrong or unrecognized parameter received: $1"
+  echo "USAGE:"
+  echo "$0 [option_1|option_n]"
+}
 
 # Document what parameters are controlled within this Main function
 #
