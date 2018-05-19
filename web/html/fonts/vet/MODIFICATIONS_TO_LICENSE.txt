@@ -1,0 +1,3 @@
+I have modified the fonts using http://www.fontsquirrel.com/tools/webfont-generator to make them embeddable.
+
+The License belongs to the original owner, as stated in LICENSE.txt
