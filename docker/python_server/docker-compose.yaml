@@ -1,0 +1,16 @@
+version: '3'
+
+services:
+  pythonserv:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/app
+    environment:
+      - APPNAME=hello_world_py
+    ports:
+      - 8001:8001
+  redis:
+    image: redis:latest
+
