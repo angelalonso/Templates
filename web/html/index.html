@@ -2,52 +2,48 @@
 <head>
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <title></title>
+  <title>Ángel Alonso Fonseca</title>
   <meta name="description" content="">
-  <script type="text/javascript" src="js/jquery-1.11.3.min.js"></script>
   <link rel="stylesheet" href="css/main.css">
 </head>
+
 <body>
   <div id="content">
+    <div id="cv_frame">
+      <div id="cv_img" onmouseover="cvOver()" onclick="cvClick()"></div>
+    </div>
+    <div id="github_frame">
+      <div id="github_img" onmouseover="githubOver()" onclick="githubClick()"></div>
+    </div>
     <div id="title">Ángel Alonso Fonseca</div>
-    <div id="hidden_div_github">Have a look at my Github Repository</div>
-    <div id="hidden_div_cv">Have a look at my CV</div>
-    <div id="hidden_MD5_cv">(SHA1sum: a1e18bed6e9ad47bbd2a17b683c0e51d28c12bd3)</div>
-    <div id="leftsidelinks">
-      <div id="btn_cv"><a href="files/CV_Alonso.pdf"><span id="btn_cv_span"></span></a></div>
-    </div>
-    <div id="centerbar">  </div>
-    <div id="rightsidelinks">
-      <div id="btn_github"><a href="https://github.com/angelalonso"><span id="btn_github_span"></span></a></div>
-    </div>
+    <div id="subtitle"></div>
+    <div id="SHA1_cv"></div>
+    <!--
+      <div id="github_title">Have a look at my Github Repository</div>
+    <div id="github">Have a look at my Github Repository</div>
+    <div id="cv">Have a look at my CV</div>
+    -->
   </div>
-<script type="text/javascript" language="javascript" >
- 
-$(document).ready(function(){
- 
-//MANDATORY: Hide the intended div upon page load or it will be visible throughout
-$('#hidden_div_github').hide();
-$('#hidden_div_cv').hide();
-$('#hidden_MD5_cv').hide();
-$("#btn_github").hover(
-  function() {
-    $('#hidden_div_github').show();
-  },
-  function() {
-    $('#hidden_div_github').hide();
-  }
-);
-$("#btn_cv").hover(
-  function() {
-    $('#hidden_div_cv').show();
-    $('#hidden_MD5_cv').show();
-  },
-  function() {
-    $('#hidden_div_cv').hide();
-    $('#hidden_MD5_cv').hide();
-  }
-);
-});
- 
-</script>
 </body>
+<script>
+  cvUrl = "files/CV_Alonso.pdf";
+  githubUrl = "https://github.com/angelalonso";
+  SHA1Cv = "a1e18bed6e9ad47bbd2a17b683c0e51d28c12bd3";
+  cvTitle = "Have a look at my CV"
+  githubTitle = "Have a look at my Github Repositories"
+  function cvClick() {
+    var win = window.open(cvUrl, '_blank');
+    win.focus();
+  }
+  function githubClick() {
+    window.location = githubUrl;
+  }
+  function cvOver() {
+    document.getElementById("subtitle").innerHTML = cvTitle
+    document.getElementById("SHA1_cv").innerHTML = "PDF's SHA1 sum is " + SHA1Cv
+  }
+  function githubOver() {
+    document.getElementById("subtitle").innerHTML = githubTitle
+    document.getElementById("SHA1_cv").innerHTML = ""
+  }
+</script>
