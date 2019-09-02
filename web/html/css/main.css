@@ -111,7 +111,7 @@ div#SHA1_cv {
   color: #066;
 }
 
-@media only screen and (max-width: 900px) {
+@media only screen and (max-width: 1080px) {
   html{
     font-size: 5vw;
   }
