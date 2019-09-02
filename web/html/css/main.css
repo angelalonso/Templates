@@ -111,7 +111,9 @@ div#SHA1_cv {
   color: #066;
 }
 
-@media only screen and (max-width: 1080px) {
+/*@media only screen and (max-width: 1080px) {
+ */
+@media screen and (orientation: portrait) {
   html{
     font-size: 5vw;
   }
