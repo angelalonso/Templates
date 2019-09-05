@@ -63,6 +63,7 @@ div#cv_img {
   position: absolute;
   width: 25%;
   min-width: 200px;
+  min-height: 200px;
   height: 25%;
   margin: auto;
   top: 40vh;
@@ -88,6 +89,7 @@ div#github_img {
   position: absolute;
   width: 25%;
   min-width: 200px;
+  min-height: 200px;
   height: 25%;
   margin: auto;
   top: 40vh;
@@ -127,12 +129,12 @@ div#SHA1_cv {
   }
   div#cv_img {
     position: absolute;
-    height: 200px;
+    height: 25%;
     width: 100%;
     bottom: 0vh;
     top: auto;
     margin: 0 auto;
-    background: url(../img/cv_focus_big.png);
+    background: url(../img/cv_focus.png);
     background-repeat: no-repeat;
     background-position: center;
   }
@@ -151,7 +153,7 @@ div#SHA1_cv {
     top: 0vh;
     bottom: auto;
     margin: 0 auto;
-    background: url(../img/github_focus_big.png);
+    background: url(../img/github_focus.png);
     background-repeat: no-repeat;
     background-position: center;
   }
