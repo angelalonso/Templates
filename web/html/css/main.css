@@ -132,7 +132,7 @@ div#SHA1_cv {
     bottom: 0vh;
     top: auto;
     margin: 0 auto;
-    background: url(../img/cv_focus.png);
+    background: url(../img/cv_focus_big.png);
     background-repeat: no-repeat;
     background-position: center;
   }
@@ -151,7 +151,7 @@ div#SHA1_cv {
     top: 0vh;
     bottom: auto;
     margin: 0 auto;
-    background: url(../img/github_focus.png);
+    background: url(../img/github_focus_big.png);
     background-repeat: no-repeat;
     background-position: center;
   }
