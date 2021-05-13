@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fonseca-de-com
+  labels:
+    app: fonseca-de-com
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: fonseca-de-com
+  template:
+    metadata:
+      labels:
+        app: fonseca-de-com 
+    spec:
+      containers:
+      - name: fonseca-de-com
+        image: angelalonso/fonseca-de-com:v0.1
+        ports:
+        - containerPort: 80
