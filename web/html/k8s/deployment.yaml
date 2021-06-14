@@ -16,6 +16,6 @@ spec:
     spec:
       containers:
       - name: fonseca-de-com
-        image: angelalonso/fonseca-de-com:v0.1
+        image: angelalonso/fonseca-de-com:v0.2
         ports:
         - containerPort: 80
