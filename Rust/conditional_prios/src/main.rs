@@ -99,10 +99,10 @@ fn parse_to_rustlogic(s: &str) -> LogicDict {
     let mut vars: HashMap<String, bool> = HashMap::new();
     let mut tbd = true;
     let mut var_ix = 0;
-    let mut formula: String = String::new();
-    formula = s.to_string();
+    //let mut formula: String = String::new();
+    let mut formula = s.to_string();
     while tbd == true {
-        let mut form_aux: String = String::new();
+        let form_aux: String;
         if formula.contains("false") {
             var_ix +=1;
             form_aux = formula.clone().replacen("false", &format!("[var{}]", var_ix), 1);
@@ -128,7 +128,7 @@ fn parse_to_rustlogic(s: &str) -> LogicDict {
 
 fn get_result(v: &str, vars: HashMap<String, i32>) -> bool {
     let comps = get_comps(v, vars);
-    let mut logicvars = parse_to_rustlogic(&comps); 
+    let logicvars = parse_to_rustlogic(&comps); 
 
     let formula =
         rustlogic::parse(&logicvars.formula).expect("OH OHHHH...");
@@ -154,7 +154,7 @@ fn main() {
     vars.insert("f".to_string(), 5);
     vars.insert("g".to_string(), 5);
     vars.insert("h".to_string(), 5);
-    let mut v = "(a<=b||c>=d)&&e>f";
+    let v = "(a<=b||c>=d)&&e>f";
     println!("{:?}", get_result(v, vars));
 
 }
