@@ -1,0 +1,12 @@
+/home/angel.alonso/Software/Dev/Templates/Python/Rust2Python/raytracer/ffi/target/release/deps/raytracer-aa6c80adb895ea8e.rmeta: /home/angel.alonso/Software/Dev/Templates/Python/Rust2Python/raytracer/src/lib.rs /home/angel.alonso/Software/Dev/Templates/Python/Rust2Python/raytracer/src/scene.rs /home/angel.alonso/Software/Dev/Templates/Python/Rust2Python/raytracer/src/vector.rs /home/angel.alonso/Software/Dev/Templates/Python/Rust2Python/raytracer/src/point.rs /home/angel.alonso/Software/Dev/Templates/Python/Rust2Python/raytracer/src/rendering.rs /home/angel.alonso/Software/Dev/Templates/Python/Rust2Python/raytracer/src/matrix.rs
+
+/home/angel.alonso/Software/Dev/Templates/Python/Rust2Python/raytracer/ffi/target/release/deps/libraytracer-aa6c80adb895ea8e.rlib: /home/angel.alonso/Software/Dev/Templates/Python/Rust2Python/raytracer/src/lib.rs /home/angel.alonso/Software/Dev/Templates/Python/Rust2Python/raytracer/src/scene.rs /home/angel.alonso/Software/Dev/Templates/Python/Rust2Python/raytracer/src/vector.rs /home/angel.alonso/Software/Dev/Templates/Python/Rust2Python/raytracer/src/point.rs /home/angel.alonso/Software/Dev/Templates/Python/Rust2Python/raytracer/src/rendering.rs /home/angel.alonso/Software/Dev/Templates/Python/Rust2Python/raytracer/src/matrix.rs
+
+/home/angel.alonso/Software/Dev/Templates/Python/Rust2Python/raytracer/ffi/target/release/deps/raytracer-aa6c80adb895ea8e.d: /home/angel.alonso/Software/Dev/Templates/Python/Rust2Python/raytracer/src/lib.rs /home/angel.alonso/Software/Dev/Templates/Python/Rust2Python/raytracer/src/scene.rs /home/angel.alonso/Software/Dev/Templates/Python/Rust2Python/raytracer/src/vector.rs /home/angel.alonso/Software/Dev/Templates/Python/Rust2Python/raytracer/src/point.rs /home/angel.alonso/Software/Dev/Templates/Python/Rust2Python/raytracer/src/rendering.rs /home/angel.alonso/Software/Dev/Templates/Python/Rust2Python/raytracer/src/matrix.rs
+
+/home/angel.alonso/Software/Dev/Templates/Python/Rust2Python/raytracer/src/lib.rs:
+/home/angel.alonso/Software/Dev/Templates/Python/Rust2Python/raytracer/src/scene.rs:
+/home/angel.alonso/Software/Dev/Templates/Python/Rust2Python/raytracer/src/vector.rs:
+/home/angel.alonso/Software/Dev/Templates/Python/Rust2Python/raytracer/src/point.rs:
+/home/angel.alonso/Software/Dev/Templates/Python/Rust2Python/raytracer/src/rendering.rs:
+/home/angel.alonso/Software/Dev/Templates/Python/Rust2Python/raytracer/src/matrix.rs:
