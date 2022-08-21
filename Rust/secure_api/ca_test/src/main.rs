@@ -1,7 +1,7 @@
 #[macro_use]
 extern crate actix_web;
 
-use actix_web::{middleware, App, HttpServer};
+use actix_web::{middleware, web, App, HttpRequest, HttpServer, Responder};
 use native_tls;
 use openssl::ssl::{SslAcceptor, SslAcceptorBuilder, SslFiletype, SslMethod};
 use std::io::Read;
@@ -71,6 +71,10 @@ pub fn tls_acceptor() -> native_tls::TlsAcceptor {
     native_tls::TlsAcceptor::from(tls_cx)
 }
 
+async fn index(_req: HttpRequest) -> impl Responder {
+    "Hello."
+}
+
 #[actix_rt::main]
 async fn main() -> io::Result<()> {
     if !are_ca_n_cert_ok() {
@@ -78,6 +82,19 @@ async fn main() -> io::Result<()> {
         generate_ca_n_cert().unwrap();
     }
 
+    let mut builder = SslAcceptor::mozilla_intermediate(SslMethod::tls()).unwrap();
+    builder
+        .set_private_key_file("certs/server.key", SslFiletype::PEM)
+        .unwrap();
+    builder
+        .set_certificate_chain_file("certs/server.crt")
+        .unwrap();
+
+    HttpServer::new(|| App::new().route("/", web::get().to(index)))
+        .bind_openssl("127.0.0.1:8080", builder)?
+        .run()
+        .await
+    /*
     let mut builder = SslAcceptor::mozilla_intermediate(SslMethod::tls()).unwrap();
     builder
         .set_private_key_file("./certs/server.key", SslFiletype::PEM)
@@ -95,9 +112,9 @@ async fn main() -> io::Result<()> {
             .wrap(middleware::Logger::default())
             // register HTTP requests handlers
             .service(tweet::list)
-            .service(tweet::get)
-            .service(tweet::create)
-            .service(tweet::delete)
+        //            .service(tweet::get)
+        //            .service(tweet::create)
+        //            .service(tweet::delete)
     })
     //.bind("0.0.0.0:9090")
     //.expect("bind 9090")
@@ -107,4 +124,5 @@ async fn main() -> io::Result<()> {
     //.expect("bind 8082")
     .run()
     .await
+    */
 }
