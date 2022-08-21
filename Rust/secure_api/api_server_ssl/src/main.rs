@@ -1,9 +1,9 @@
 #[macro_use]
 extern crate actix_web;
 
-use actix_web::{middleware, web, App, HttpRequest, HttpServer, Responder};
+use actix_web::{middleware, App, HttpServer};
 use native_tls;
-use openssl::ssl::{SslAcceptor, SslAcceptorBuilder, SslFiletype, SslMethod};
+use openssl::ssl::{SslAcceptor, SslFiletype, SslMethod};
 use std::io::Read;
 use std::path::Path;
 use std::process::Command;
@@ -46,17 +46,6 @@ fn generate_ca_n_cert() -> io::Result<()> {
     ))
 }
 
-fn ssl_builder() -> SslAcceptorBuilder {
-    let mut builder = SslAcceptor::mozilla_intermediate(SslMethod::tls()).unwrap();
-    builder
-        .set_private_key_file("key.pem", SslFiletype::PEM)
-        .expect("failed to open/read key.pem");
-    builder
-        .set_certificate_chain_file("cert.pem")
-        .expect("failed to open/read cert.pem");
-    builder
-}
-
 pub fn tls_acceptor() -> native_tls::TlsAcceptor {
     let mut file = std::fs::File::open("cert+key.p12")
         .map_err(|e| {
@@ -69,10 +58,6 @@ pub fn tls_acceptor() -> native_tls::TlsAcceptor {
     let cert = native_tls::Identity::from_pkcs12(&der, "").expect("failed to read .p12");
     let tls_cx = native_tls::TlsAcceptor::builder(cert).build().unwrap();
     native_tls::TlsAcceptor::from(tls_cx)
-}
-
-async fn index(_req: HttpRequest) -> impl Responder {
-    "Hello."
 }
 
 #[actix_rt::main]
@@ -90,19 +75,6 @@ async fn main() -> io::Result<()> {
         .set_certificate_chain_file("certs/server.crt")
         .unwrap();
 
-    HttpServer::new(|| App::new().route("/", web::get().to(index)))
-        .bind_openssl("127.0.0.1:8080", builder)?
-        .run()
-        .await
-    /*
-    let mut builder = SslAcceptor::mozilla_intermediate(SslMethod::tls()).unwrap();
-    builder
-        .set_private_key_file("./certs/server.key", SslFiletype::PEM)
-        .unwrap();
-    builder
-        .set_certificate_chain_file("./certs/server.crt")
-        .unwrap();
-
     env::set_var("RUST_LOG", "actix_web=debug,actix_server=info");
     env_logger::init();
 
@@ -110,19 +82,14 @@ async fn main() -> io::Result<()> {
         App::new()
             // enable logger - always register actix-web Logger middleware last
             .wrap(middleware::Logger::default())
-            // register HTTP requests handlers
             .service(tweet::list)
-        //            .service(tweet::get)
-        //            .service(tweet::create)
-        //            .service(tweet::delete)
+            .service(tweet::get)
+            .service(tweet::create)
+            .service(tweet::delete)
     })
-    //.bind("0.0.0.0:9090")
-    //.expect("bind 9090")
-    .bind_openssl("127.0.0.1:8081", builder)?
-    //.expect("bind 8081")
-    //.bind_tls("127.0.0.1:8082", tls_acceptor)
-    //.expect("bind 8082")
+    // TODO: set port up manually
+    .bind_openssl("127.0.0.1:8080", builder)?
     .run()
     .await
-    */
+    // TEST: curl --cacert certs/cacert.pem -X GET https://127.0.0.1:8080/tweets
 }

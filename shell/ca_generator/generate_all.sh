@@ -15,6 +15,15 @@ SERVER_CSR="$CRTPATH/server.csr"
 SERVER_EXT="$CRTPATH/server_ext.cfg"
 SERVER_KEY="$CRTPATH/server.key"
 
+# TODO: Add automatically all IPs at the host to server_ext.cfg ($SERVER_EXT)
+#  
+#   [alt_names]
+#   DNS.1 = test.com
+#   IP.1 = 127.0.0.1
+#   IP.2 = 0.0.0.0
+#   ...
+#   IP.3 = 192.168.0.44 <- like this
+
 function show_log {
   TSTAMP=$(date "+%Y-%m-%d %H:%M:%S")
   case $1 in
