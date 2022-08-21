@@ -58,7 +58,6 @@ function generate_selfsigned_cert {
      exit 2
   fi
 
-
   show_log info "Generating self signed certificate"
   $OPENSSL_CMD x509 -req -days 3650 -in $SERVER_CSR -signkey $SERVER_KEY -out $SERVER_CRT 2>/dev/null
   if [ $? -ne 0 ] ; then

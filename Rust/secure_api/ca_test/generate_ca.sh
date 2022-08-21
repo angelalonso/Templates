@@ -1,0 +1,1 @@
+../../../shell/ca_generator/generate_all.sh
