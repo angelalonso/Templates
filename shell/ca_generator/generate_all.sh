@@ -15,76 +15,98 @@ SERVER_CSR="$CRTPATH/server.csr"
 SERVER_EXT="$CRTPATH/server_ext.cfg"
 SERVER_KEY="$CRTPATH/server.key"
 
+function show_log {
+  TSTAMP=$(date "+%Y-%m-%d %H:%M:%S")
+  case $1 in
+    "debug"|"d")
+      echo "[$TSTAMP][DEBUG] - $2"
+      ;;
+    "info"|"i")
+      echo "[$TSTAMP][INFO] - $2"
+      ;;
+    "warn"|"w")
+      echo "[$TSTAMP][WARN] - $2"
+      ;;
+    "error"|"err"|"e")
+      echo "[$TSTAMP][ERROR] - $2"
+      ;;
+    *)
+      echo "[$TSTAMP][DEBUG] - Wrong Logging mode"
+      exit 2
+      ;;
+  esac
+}
+
 function generate_selfsigned_cert {
 
   # generating server key
-  echo "Generating private key"
+  show_log info "Generating private key"
   $OPENSSL_CMD genrsa -out $SERVER_KEY 4096 2>/dev/null
   if [ $? -ne 0 ] ; then
-     echo "ERROR: Failed to generate $SERVER_KEY"
-     exit 1
+    show_log err "Failed to generate $SERVER_KEY"
+     exit 2
   fi
 
   ## Update Common Name in External File
   /bin/echo "commonName              = $COMMON_NAME" >> $EXTFILE
 
   # Generating Certificate Signing Request using config file
-  echo "Generating Certificate Signing Request"
+  show_log info "Generating Certificate Signing Request"
   $OPENSSL_CMD req -new -key $SERVER_KEY -out $SERVER_CSR -config $EXTFILE 2>/dev/null
   if [ $? -ne 0 ] ; then
-     echo "ERROR: Failed to generate $SERVER_CSR"
-     exit 1
+     show_log err "Failed to generate $SERVER_CSR"
+     exit 2
   fi
 
 
-  echo "Generating self signed certificate"
+  show_log info "Generating self signed certificate"
   $OPENSSL_CMD x509 -req -days 3650 -in $SERVER_CSR -signkey $SERVER_KEY -out $SERVER_CRT 2>/dev/null
   if [ $? -ne 0 ] ; then
-     echo "ERROR: Failed to generate self-signed certificate file $SERVER_CRT"
+     show_log err "Failed to generate self-signed certificate file $SERVER_CRT"
   fi
 }
 
 function generate_root_ca {
 
     ## generate rootCA private key
-    echo "Generating RootCA private key"
+    show_log info "Generating RootCA private key"
     if [[ ! -f $CA_KEY ]];then
        $OPENSSL_CMD genrsa -out $CA_KEY 4096 2>/dev/null
-       [[ $? -ne 0 ]] && echo "ERROR: Failed to generate $CA_KEY" && exit 1
+       [[ $? -ne 0 ]] && show_log err "Failed to generate $CA_KEY" && exit 2
     else
-       echo "$CA_KEY seems to be already generated, skipping the generation of RootCA certificate"
+       show_log info "$CA_KEY seems to be already generated, skipping the generation of RootCA certificate"
        return 0
     fi
 
     ## generate rootCA certificate
-    echo "Generating RootCA certificate"
+    show_log info "Generating RootCA certificate"
     #$OPENSSL_CMD req -new -x509 -days 3650 -config $CA_EXTFILE -key $CA_KEY -out $CA_CRT 2>/dev/null
     $OPENSSL_CMD req -new -x509 -days 3650 -config $CA_EXTFILE -key $CA_KEY -out $CA_CRT 
-    [[ $? -ne 0 ]] && echo "ERROR: Failed to generate $CA_CRT" && exit 1
+    [[ $? -ne 0 ]] && show_log err "Failed to generate $CA_CRT" && exit 2
 
     ## read the certificate
-    echo "Verify RootCA certificate"
+    show_log info "Verify RootCA certificate"
     $OPENSSL_CMD  x509 -noout -text -in $CA_CRT >/dev/null 2>&1
-    [[ $? -ne 0 ]] && echo "ERROR: Failed to read $CA_CRT" && exit 1
+    [[ $? -ne 0 ]] && show_log err "Failed to read $CA_CRT" && exit 2
 }
 
 function generate_server_certificate {
 
-    echo "Generating server private key"
+    show_log info "Generating server private key"
     $OPENSSL_CMD genrsa -out $SERVER_KEY 4096 2>/dev/null
-    [[ $? -ne 0 ]] && echo "ERROR: Failed to generate $SERVER_KEY" && exit 1
+    [[ $? -ne 0 ]] && show_log err "Failed to generate $SERVER_KEY" && exit 2
 
-    echo "Generating certificate signing request for server"
+    show_log info "Generating certificate signing request for server"
     $OPENSSL_CMD req -new -key $SERVER_KEY -out $SERVER_CSR -config $SERVER_CONF 2>/dev/null
-    [[ $? -ne 0 ]] && echo "ERROR: Failed to generate $SERVER_CSR" && exit 1
+    [[ $? -ne 0 ]] && show_log err "Failed to generate $SERVER_CSR" && exit 2
 
-    echo "Generating RootCA signed server certificate"
+    show_log info "Generating RootCA signed server certificate"
     $OPENSSL_CMD x509 -req -in $SERVER_CSR -CA $CA_CRT -CAkey $CA_KEY -out $SERVER_CRT -CAcreateserial -days 365 -sha512 -extfile $SERVER_EXT 2>/dev/null
-    [[ $? -ne 0 ]] && echo "ERROR: Failed to generate $SERVER_CRT" && exit 1
+    [[ $? -ne 0 ]] && show_log err "Failed to generate $SERVER_CRT" && exit 2
 
-    echo "Verifying the server certificate against RootCA"
+    show_log info "Verifying the server certificate against RootCA"
     $OPENSSL_CMD verify -CAfile $CA_CRT $SERVER_CRT >/dev/null 2>&1
-     [[ $? -ne 0 ]] && echo "ERROR: Failed to verify $SERVER_CRT against $CA_CRT" && exit 1
+     [[ $? -ne 0 ]] && show_log err "Failed to verify $SERVER_CRT against $CA_CRT" && exit 2
 }
 
 function show_usage {
@@ -123,3 +145,4 @@ cp $CFGSPATH/* $CRTPATH
 generate_selfsigned_cert
 generate_root_ca
 generate_server_certificate
+exit 0
