@@ -128,6 +128,17 @@ function show_usage {
     return 0
 }
 
+function add_current_ips {
+
+  IPS=($(hostname -I))
+
+  last_id=2
+  for ip in "${IPS[@]}"
+  do
+    ((last_id=last_id+1))
+    echo "IP.$last_id = $ip" >> $SERVER_EXT 
+  done
+}
 
 # MAIN
 case $1 in
@@ -150,6 +161,7 @@ esac
 mkdir -p $CRTPATH
 cp $CFGSPATH/* $CRTPATH
 
+add_current_ips
 generate_selfsigned_cert
 generate_root_ca
 generate_server_certificate
