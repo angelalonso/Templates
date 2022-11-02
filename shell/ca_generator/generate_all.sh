@@ -15,15 +15,6 @@ SERVER_CSR="$CRTPATH/server.csr"
 SERVER_EXT="$CRTPATH/server_ext.cfg"
 SERVER_KEY="$CRTPATH/server.key"
 
-# TODO: Add automatically all IPs at the host to server_ext.cfg ($SERVER_EXT)
-#  
-#   [alt_names]
-#   DNS.1 = test.com
-#   IP.1 = 127.0.0.1
-#   IP.2 = 0.0.0.0
-#   ...
-#   IP.3 = 192.168.0.44 <- like this
-
 function show_log {
   TSTAMP=$(date "+%Y-%m-%d %H:%M:%S")
   case $1 in
@@ -44,6 +35,19 @@ function show_log {
       exit 2
       ;;
   esac
+}
+
+function add_current_ips {
+
+  IPS=($(hostname -I))
+
+  last_id=2
+  for ip in "${IPS[@]}"
+  do
+    show_log info "ATTENTION!: Automatically adding $ip to IPs on file $SERVER_EXT"
+    ((last_id=last_id+1))
+    echo "IP.$last_id = $ip" >> $SERVER_EXT 
+  done
 }
 
 function generate_selfsigned_cert {
@@ -128,7 +132,6 @@ function show_usage {
     return 0
 }
 
-
 # MAIN
 case $1 in
      -cn)
@@ -150,6 +153,7 @@ esac
 mkdir -p $CRTPATH
 cp $CFGSPATH/* $CRTPATH
 
+add_current_ips
 generate_selfsigned_cert
 generate_root_ca
 generate_server_certificate
