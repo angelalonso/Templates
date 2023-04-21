@@ -9,11 +9,17 @@ import (
 
 type StubPlayerStore struct {
 	scores map[string]int
+	winCalls []string
 }
 
 func (s *StubPlayerStore) GetPlayerScore(name string) int {
 	score := s.scores[name]
 	return score
+}
+
+func (s *StubPlayerStore) RecordWin(name string) {
+	s.winCalls = append(s.winCalls, name)
+
 }
 
 func TestGETPlayers(t *testing.T) {
@@ -22,6 +28,7 @@ func TestGETPlayers(t *testing.T) {
 			"Pepper": 20,
 			"Floyd": 10,
 		},
+		nil,
 	}
 	server := &PlayerServer{&store}
 	t.Run("returns Pepper's score", func(t *testing.T) {
@@ -31,6 +38,7 @@ func TestGETPlayers(t *testing.T) {
 		server.ServeHTTP(response, request)
 
 		assertResponseBody(t, response.Body.String(), "20")
+		assertStatus(t, response.Code, http.StatusOK)
 
 	})
 	t.Run("Returns Floyd's Score", func(t *testing.T) {
@@ -40,6 +48,16 @@ func TestGETPlayers(t *testing.T) {
 		server.ServeHTTP(response, request)
 
 		assertResponseBody(t, response.Body.String(), "10")
+		assertStatus(t, response.Code, http.StatusOK)
+
+	})
+	t.Run("Returns a 404 on missing players", func(t *testing.T) {
+		request := newGetScoreRequest("Apollo")
+		response := httptest.NewRecorder()
+
+		server.ServeHTTP(response, request)
+
+		assertStatus(t, response.Code, http.StatusNotFound)
 
 	})
 
@@ -55,6 +73,43 @@ func assertResponseBody(t testing.TB, got, want string) {
 	if got != want {
 		t.Errorf(fmt.Sprintf("Response Body is wrong. Got %q, want %q", got, want))
 	}
+}
 
+func assertStatus(t testing.TB, got, want int) {
+	t.Helper()
+	if got != want {
+		t.Errorf(fmt.Sprintf("Did not get the correct Status. Got %d, want %d", got, want))
+	}
+}
 
+func TestStoreWins(t *testing.T) {
+	store := StubPlayerStore{
+		map[string]int{},
+		nil,
+	}
+	server := &PlayerServer{&store}
+
+	t.Run("it records Wins when POST", func(t *testing.T) {
+		player := "Pepper"
+
+		request := newPostWinRequest(player)
+		response := httptest.NewRecorder()
+
+		server.ServeHTTP(response, request)
+
+		assertStatus(t, response.Code, http.StatusAccepted)
+
+		if len(store.winCalls) != 1 {
+			t.Fatalf("Got %d calls to RecordWin, want %d", len(store.winCalls), 1)
+		}
+
+		if store.winCalls[0] != player {
+			t.Errorf("did not store Correct winner got %q wanted %q", store.winCalls[0], player)
+		}
+	})
+}
+
+func newPostWinRequest(name string) *http.Request {
+	req, _ := http.NewRequest(http.MethodPost, fmt.Sprintf("/players/%s", name), nil)
+	return req
 }

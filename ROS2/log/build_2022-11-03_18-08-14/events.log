@@ -1,0 +1,71 @@
+[0.000000] (-) TimerEvent: {}
+[0.000828] (-) JobUnselected: {'identifier': 'first_package'}
+[0.000879] (cpp_pubsub) JobQueued: {'identifier': 'cpp_pubsub', 'dependencies': OrderedDict()}
+[0.000914] (cpp_pubsub) JobStarted: {'identifier': 'cpp_pubsub'}
+[0.013395] (cpp_pubsub) JobProgress: {'identifier': 'cpp_pubsub', 'progress': 'cmake'}
+[0.013825] (cpp_pubsub) Command: {'cmd': ['/usr/bin/cmake', '/home/aaf/Software/Dev/Templates/ROS2/cpp_pubsub', '-DCMAKE_INSTALL_PREFIX=/home/aaf/Software/Dev/Templates/ROS2/install/cpp_pubsub'], 'cwd': '/home/aaf/Software/Dev/Templates/ROS2/build/cpp_pubsub', 'env': OrderedDict([('TMUX', '/tmp/tmux-1000/default,5950,0'), ('LC_TIME', 'de_DE.UTF-8'), ('USER', 'aaf'), ('SSH_AGENT_PID', '2337'), ('XDG_SESSION_TYPE', 'x11'), ('SHLVL', '2'), ('LD_LIBRARY_PATH', '/opt/ros/rolling/opt/yaml_cpp_vendor/lib:/opt/ros/rolling/opt/rviz_ogre_vendor/lib:/opt/ros/rolling/lib/x86_64-linux-gnu:/opt/ros/rolling/lib'), ('HOME', '/home/aaf'), ('OLDPWD', '/home/aaf/Software/Dev/Templates/ROS2/cpp_pubsub'), ('LESS', '-R'), ('DESKTOP_SESSION', 'ubuntu'), ('ZSH', '/home/aaf/.oh-my-zsh'), ('LSCOLORS', 'Gxfxcxdxbxegedabagacad'), ('GNOME_SHELL_SESSION_MODE', 'ubuntu'), ('GTK_MODULES', 'gail:atk-bridge'), ('PAGER', 'less'), ('ROS_PYTHON_VERSION', '3'), ('LC_MONETARY', 'de_DE.UTF-8'), ('MANAGERPID', '2158'), ('DBUS_SESSION_BUS_ADDRESS', 'unix:path=/run/user/1000/bus'), ('COLORTERM', 'truecolor'), ('GIO_LAUNCHED_DESKTOP_FILE_PID', '5937'), ('TERMINATOR_DBUS_NAME', 'net.tenshu.Terminator21a9d5db22c73a993ff0b42f64b396873'), ('IM_CONFIG_PHASE', '1'), ('MANDATORY_PATH', '/usr/share/gconf/ubuntu.mandatory.path'), ('ROS_DISTRO', 'rolling'), ('LOGNAME', 'aaf'), ('JOURNAL_STREAM', '8:58131'), ('_', '/usr/bin/colcon'), ('DEFAULTS_PATH', '/usr/share/gconf/ubuntu.default.path'), ('XDG_SESSION_CLASS', 'user'), ('ROS_VERSION', '2'), ('TERM', 'screen-256color'), ('USERNAME', 'aaf'), ('GNOME_DESKTOP_SESSION_ID', 'this-is-deprecated'), ('ROS_LOCALHOST_ONLY', '0'), ('WINDOWPATH', '2'), ('PATH', '/opt/ros/rolling/bin:/home/aaf/bin:/usr/local/bin:/home/aaf/.local/bin:/home/aaf/Software/Dev/sysangel/scripts:/usr/local/go/bin:/home/aaf/.cargo/bin:/home/aaf/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin'), ('INVOCATION_ID', 'c7a63a7ea0ac41d8a557829e49c359fe'), ('SESSION_MANAGER', 'local/aafhome:@/tmp/.ICE-unix/2375,unix/aafhome:/tmp/.ICE-unix/2375'), ('LC_ADDRESS', 'de_DE.UTF-8'), ('XDG_MENU_PREFIX', 'gnome-'), ('XDG_RUNTIME_DIR', '/run/user/1000'), ('DISPLAY', ':0'), ('LANG', 'en_US.UTF-8'), ('LC_TELEPHONE', 'de_DE.UTF-8'), ('TERMINATOR_DBUS_PATH', '/net/tenshu/Terminator2'), ('XDG_CURRENT_DESKTOP', 'ubuntu:GNOME'), ('XAUTHORITY', '/run/user/1000/gdm/Xauthority'), ('XDG_SESSION_DESKTOP', 'ubuntu'), ('XMODIFIERS', '@im=ibus'), ('LS_COLORS', 'rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=30;41:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arc=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=01;31:*.lzo=01;31:*.xz=01;31:*.zst=01;31:*.tzst=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.alz=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.cab=01;31:*.wim=01;31:*.swm=01;31:*.dwm=01;31:*.esd=01;31:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:'), ('SSH_AUTH_SOCK', '/run/user/1000/keyring/ssh'), ('AMENT_PREFIX_PATH', '/opt/ros/rolling'), ('LC_NAME', 'de_DE.UTF-8'), ('SHELL', '/usr/bin/zsh'), ('TERMINATOR_UUID', 'urn:uuid:33ff7ed3-0003-48ed-8969-6dc209c3388b'), ('GDMSESSION', 'ubuntu'), ('QT_ACCESSIBILITY', '1'), ('LC_MEASUREMENT', 'de_DE.UTF-8'), ('GPG_AGENT_INFO', '/run/user/1000/gnupg/S.gpg-agent:0:1'), ('LC_IDENTIFICATION', 'de_DE.UTF-8'), ('QT_IM_MODULE', 'ibus'), ('PWD', '/home/aaf/Software/Dev/Templates/ROS2/build/cpp_pubsub'), ('XDG_CONFIG_DIRS', '/etc/xdg/xdg-ubuntu:/etc/xdg'), ('XDG_DATA_DIRS', '/usr/share/ubuntu:/usr/local/share/:/usr/share/:/var/lib/snapd/desktop'), ('LC_NUMERIC', 'de_DE.UTF-8'), ('PYTHONPATH', '/opt/ros/rolling/lib/python3.8/site-packages'), ('LC_PAPER', 'de_DE.UTF-8'), ('COLCON', '1'), ('TMUX_PANE', '%3'), ('VTE_VERSION', '6003'), ('CMAKE_PREFIX_PATH', '/opt/ros/rolling')]), 'shell': False}
+[0.079976] (cpp_pubsub) StdoutLine: {'line': b'-- The C compiler identification is GNU 9.4.0\n'}
+[0.100037] (-) TimerEvent: {}
+[0.140219] (cpp_pubsub) StdoutLine: {'line': b'-- The CXX compiler identification is GNU 9.4.0\n'}
+[0.144920] (cpp_pubsub) StdoutLine: {'line': b'-- Check for working C compiler: /usr/bin/cc\n'}
+[0.200177] (-) TimerEvent: {}
+[0.222631] (cpp_pubsub) StdoutLine: {'line': b'-- Check for working C compiler: /usr/bin/cc -- works\n'}
+[0.223555] (cpp_pubsub) StdoutLine: {'line': b'-- Detecting C compiler ABI info\n'}
+[0.299986] (cpp_pubsub) StdoutLine: {'line': b'-- Detecting C compiler ABI info - done\n'}
+[0.300178] (-) TimerEvent: {}
+[0.314180] (cpp_pubsub) StdoutLine: {'line': b'-- Detecting C compile features\n'}
+[0.314586] (cpp_pubsub) StdoutLine: {'line': b'-- Detecting C compile features - done\n'}
+[0.317451] (cpp_pubsub) StdoutLine: {'line': b'-- Check for working CXX compiler: /usr/bin/c++\n'}
+[0.400327] (-) TimerEvent: {}
+[0.413584] (cpp_pubsub) StdoutLine: {'line': b'-- Check for working CXX compiler: /usr/bin/c++ -- works\n'}
+[0.414712] (cpp_pubsub) StdoutLine: {'line': b'-- Detecting CXX compiler ABI info\n'}
+[0.500000] (cpp_pubsub) StdoutLine: {'line': b'-- Detecting CXX compiler ABI info - done\n'}
+[0.500384] (-) TimerEvent: {}
+[0.512871] (cpp_pubsub) StdoutLine: {'line': b'-- Detecting CXX compile features\n'}
+[0.513441] (cpp_pubsub) StdoutLine: {'line': b'-- Detecting CXX compile features - done\n'}
+[0.515716] (cpp_pubsub) StdoutLine: {'line': b'-- Found ament_cmake: 1.2.1 (/opt/ros/rolling/share/ament_cmake/cmake)\n'}
+[0.600495] (-) TimerEvent: {}
+[0.651728] (cpp_pubsub) StdoutLine: {'line': b'-- Found Python3: /usr/bin/python3.8 (found version "3.8.10") found components: Interpreter \n'}
+[0.700617] (-) TimerEvent: {}
+[0.730496] (cpp_pubsub) StdoutLine: {'line': b'-- Found rclcpp: 15.0.0 (/opt/ros/rolling/share/rclcpp/cmake)\n'}
+[0.778641] (cpp_pubsub) StdoutLine: {'line': b'-- Using all available rosidl_typesupport_c: rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c\n'}
+[0.784626] (cpp_pubsub) StdoutLine: {'line': b'-- Found rosidl_adapter: 3.0.1 (/opt/ros/rolling/share/rosidl_adapter/cmake)\n'}
+[0.800718] (-) TimerEvent: {}
+[0.826391] (cpp_pubsub) StdoutLine: {'line': b'-- Using all available rosidl_typesupport_cpp: rosidl_typesupport_fastrtps_cpp;rosidl_typesupport_introspection_cpp\n'}
+[0.891506] (cpp_pubsub) StdoutLine: {'line': b'-- Found rmw_implementation_cmake: 5.1.0 (/opt/ros/rolling/share/rmw_implementation_cmake/cmake)\n'}
+[0.893959] (cpp_pubsub) StdoutLine: {'line': b'-- Found rmw_cyclonedds_cpp: 1.1.2 (/opt/ros/rolling/share/rmw_cyclonedds_cpp/cmake)\n'}
+[0.900822] (-) TimerEvent: {}
+[0.915714] (cpp_pubsub) StdoutLine: {'line': b"-- Using RMW implementation 'rmw_cyclonedds_cpp' as default\n"}
+[1.000961] (-) TimerEvent: {}
+[1.101246] (-) TimerEvent: {}
+[1.151299] (cpp_pubsub) StdoutLine: {'line': b'-- Configuring done\n'}
+[1.151984] (cpp_pubsub) StderrLine: {'line': b'CMake Error at CMakeLists.txt:20 (add_executable):\n'}
+[1.152125] (cpp_pubsub) StderrLine: {'line': b'  Cannot find source file:\n'}
+[1.152200] (cpp_pubsub) StderrLine: {'line': b'\n'}
+[1.152268] (cpp_pubsub) StderrLine: {'line': b'    src/subscriber_member_function.cpp\n'}
+[1.152333] (cpp_pubsub) StderrLine: {'line': b'\n'}
+[1.152397] (cpp_pubsub) StderrLine: {'line': b'  Tried extensions .c .C .c++ .cc .cpp .cxx .cu .m .M .mm .h .hh .h++ .hm\n'}
+[1.152462] (cpp_pubsub) StderrLine: {'line': b'  .hpp .hxx .in .txx\n'}
+[1.152525] (cpp_pubsub) StderrLine: {'line': b'\n'}
+[1.152587] (cpp_pubsub) StderrLine: {'line': b'\n'}
+[1.152824] (cpp_pubsub) StderrLine: {'line': b'CMake Error at CMakeLists.txt:13 (add_executable):\n'}
+[1.152926] (cpp_pubsub) StderrLine: {'line': b'  Cannot find source file:\n'}
+[1.153062] (cpp_pubsub) StderrLine: {'line': b'\n'}
+[1.153143] (cpp_pubsub) StderrLine: {'line': b'    src/publisher_member_function.cpp\n'}
+[1.153210] (cpp_pubsub) StderrLine: {'line': b'\n'}
+[1.153274] (cpp_pubsub) StderrLine: {'line': b'  Tried extensions .c .C .c++ .cc .cpp .cxx .cu .m .M .mm .h .hh .h++ .hm\n'}
+[1.153338] (cpp_pubsub) StderrLine: {'line': b'  .hpp .hxx .in .txx\n'}
+[1.153402] (cpp_pubsub) StderrLine: {'line': b'\n'}
+[1.153475] (cpp_pubsub) StderrLine: {'line': b'\n'}
+[1.153542] (cpp_pubsub) StderrLine: {'line': b'CMake Error at CMakeLists.txt:20 (add_executable):\n'}
+[1.153605] (cpp_pubsub) StderrLine: {'line': b'  No SOURCES given to target: listener\n'}
+[1.153667] (cpp_pubsub) StderrLine: {'line': b'\n'}
+[1.153730] (cpp_pubsub) StderrLine: {'line': b'\n'}
+[1.153792] (cpp_pubsub) StderrLine: {'line': b'CMake Error at CMakeLists.txt:13 (add_executable):\n'}
+[1.153853] (cpp_pubsub) StderrLine: {'line': b'  No SOURCES given to target: talker\n'}
+[1.153915] (cpp_pubsub) StderrLine: {'line': b'\n'}
+[1.153977] (cpp_pubsub) StderrLine: {'line': b'\n'}
+[1.154039] (cpp_pubsub) StderrLine: {'line': b'CMake Generate step failed.  Build files cannot be regenerated correctly.\n'}
+[1.160128] (cpp_pubsub) CommandEnded: {'returncode': 1}
+[1.188772] (cpp_pubsub) JobEnded: {'identifier': 'cpp_pubsub', 'rc': 1}
+[1.199539] (-) EventReactorShutdown: {}
