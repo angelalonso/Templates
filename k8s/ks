@@ -1,0 +1,8 @@
+#!/bin/bash
+# Run Python program with Pipenv, forwarding all arguments
+
+# Get directory of this script
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+
+# Run the program with pipenv, forwarding all arguments
+exec pipenv run python3 "${SCRIPT_DIR}/ks.py" "$@"
