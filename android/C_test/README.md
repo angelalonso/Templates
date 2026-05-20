@@ -39,3 +39,24 @@ export ANDROID_NDK_HOME=$ANDROID_HOME/ndk/26.1.10909125
 # build
 ./build.sh
 
+# Emulator
+sdkmanager "emulator"
+export PATH=$PATH:$ANDROID_HOME/emulator
+
+sdkmanager "system-images;android-33;google_apis;x86_64"
+
+avdmanager create avd -n accelerometer_test -k "system-images;android-33;google_apis;x86_64" --device "pixel_6"
+
+emulator -avd accelerometer_test
+
+### Performance Tip 
+sudo apt install qemu-kvm
+sudo adduser $USER kvm
+
+## Send events
+# Connect to emulator console (port 5554 for first emulator)
+telnet localhost 5554
+
+# Then send sensor commands:
+sensor set acceleration 9.8:0:0    # X:9.8, Y:0, Z:0
+sensor set acceleration 0:-9.8:0   # Tilted
