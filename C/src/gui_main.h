@@ -11,7 +11,7 @@ typedef struct {
 } MainWindowWidgets;
 
 // Create and show main window
-GtkWidget* create_main_window(GtkApplication *app);
+GtkWidget *create_main_window(GtkApplication *app);
 
 // Update main window display
 void update_main_display(MainWindowWidgets *widgets);

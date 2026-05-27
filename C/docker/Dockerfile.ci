@@ -2,6 +2,7 @@ FROM ubuntu:22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
+# Install all build dependencies for Linux
 RUN apt-get update && apt-get install -y \
     build-essential \
     cmake \
@@ -15,6 +16,8 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /app
 COPY . .
 
+# Make scripts executable
 RUN chmod +x scripts/ci.sh
 
+# Run the full CI pipeline
 CMD ["./scripts/ci.sh"]

@@ -3,9 +3,9 @@
 
 #include <stddef.h>
 
-#define MAX_KEY_LEN 64
-#define MAX_VALUE_LEN 4096
-#define MAX_LINE_LEN 4096
+// Use enum instead of macros for constants
+enum { MAX_KEY_LEN = 64, MAX_VALUE_LEN = 4096, MAX_LINE_LEN = 4096 };
+
 #define CONFIG_FILE "cfg.yml"
 
 typedef struct {

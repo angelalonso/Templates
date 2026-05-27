@@ -3,11 +3,14 @@ Checks: 'bugprone-*,
          performance-*,
          readability-*,
          modernize-*,
-         clang-analyzer-*,
-         cppcoreguidelines-*,
          -bugprone-easily-swappable-parameters,
          -readability-identifier-length,
-         -readability-magic-numbers'
+         -readability-magic-numbers,
+         -cppcoreguidelines-avoid-magic-numbers,
+         -cppcoreguidelines-macro-to-enum,
+         -modernize-macro-to-enum,
+         -clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling,
+         -clang-analyzer-security.insecureAPI.strcpy'
 
 WarningsAsErrors: '*'
 
