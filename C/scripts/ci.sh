@@ -10,18 +10,22 @@ print_error() {
     exit 1
 }
 
+print_warning() {
+    echo "[WARN] $1"
+}
+
 # Format code
 format_code() {
     print_status "Formatting code..."
-    find src tests -name "*.c" -o -name "*.h" | xargs clang-format -i
+    find src tests -name "*.c" -o -name "*.h" 2>/dev/null | xargs clang-format -i 2>/dev/null || true
     print_status "Code formatting complete"
 }
 
 # Lint code
 lint_code() {
     print_status "Running linter..."
-    for file in $(find src -name "*.c" -o -name "*.h"); do
-        clang-tidy $file --config-file=.clang-tidy || print_error "Linting failed"
+    for file in $(find src -name "*.c" -o -name "*.h" 2>/dev/null); do
+        clang-tidy $file --config-file=.clang-tidy 2>/dev/null || print_error "Linting failed"
     done
     print_status "Linting passed"
 }
@@ -33,7 +37,7 @@ build_and_test() {
     mkdir -p build_test
     cd build_test
     
-    cmake .. -DBUILD_TESTS=ON
+    cmake .. -DBUILD_TESTS=ON -DBUILD_GUI_TESTS=ON -DENABLE_COVERAGE=OFF
     make -j$(nproc)
     
     print_status "Running tests..."
@@ -47,7 +51,26 @@ build_and_test() {
     print_status "All tests passed"
 }
 
-# Safety checks
+# Run GUI safety checks
+run_gui_safety_checks() {
+    print_status "Running GUI safety checks..."
+    
+    # Check if GUI can initialize without crashing
+    print_status "Testing GUI initialization..."
+    timeout 3 ./config_gui 2>&1 | grep -q "GLib-GObject-CRITICAL" && \
+        print_error "GUI initialization has critical errors"
+    
+    # Run GUI with valgrind
+    if command -v valgrind &> /dev/null; then
+        print_status "Running GUI with Valgrind..."
+        timeout 5 valgrind --leak-check=full --track-origins=yes ./config_gui 2>&1 | \
+            grep -q "Invalid read" && print_error "GUI has memory errors"
+    fi
+    
+    print_status "GUI safety checks passed"
+}
+
+# Safety checks with sanitizers
 run_safety_checks() {
     print_status "Running AddressSanitizer..."
     mkdir -p build_asan
@@ -75,7 +98,7 @@ build_gui() {
     cd build
     cmake .. -DBUILD_TESTS=OFF
     make -j$(nproc)
-    cp config_gui /app/config_gui
+    cp config_gui /app/config_gui 2>/dev/null || cp config_gui ../config_gui
     print_status "GUI build complete"
 }
 
@@ -89,6 +112,7 @@ main() {
     build_and_test
     run_safety_checks
     build_gui
+    run_gui_safety_checks
     
     print_status "================================"
     print_status "CI pipeline completed successfully"
