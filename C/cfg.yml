@@ -1,0 +1,6 @@
+app_name: MyConfigApp
+version: 1.0.0
+debug_mode: false
+max_connections: 100
+timeout_seconds: 30
+text: another o

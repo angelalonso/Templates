@@ -1,0 +1,10 @@
+---
+Checks: 'bugprone-*,-bugprone-easily-swappable-parameters,
+         performance-*,
+         readability-*,
+         -readability-identifier-length,
+         -readability-magic-numbers,
+         modernize-*'
+WarningsAsErrors: ''
+HeaderFilterRegex: '.*'
+FormatStyle: file
