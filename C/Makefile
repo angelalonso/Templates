@@ -1,69 +1,27 @@
-.PHONY: all build test lint clean help setup ci
+CC = gcc
+CFLAGS = -Wall -Wextra -O2 `pkg-config --cflags gtk+-3.0 webkit2gtk-4.1`
+LIBS = `pkg-config --libs gtk+-3.0 webkit2gtk-4.1`
+TARGET = config_editor
+SRCDIR = src
+OBJDIR = obj
+SRCS = $(SRCDIR)/main.c $(SRCDIR)/config.c
+OBJS = $(OBJDIR)/main.o $(OBJDIR)/config.o
 
-all: lint test build
+all: $(OBJDIR) $(TARGET)
 
-# Build GUI application (Linux only)
-build:
-	@echo "[INFO] Building Linux GUI application..."
-	@mkdir -p build
-	@cd build && cmake .. -DBUILD_TESTS=OFF
-	@cd build && make -j$(nproc)
-	@cp build/config_gui ./config_gui
-	@chmod +x ./config_gui
-	@echo "[SUCCESS] Build complete: ./config_gui"
+$(OBJDIR):
+	mkdir -p $(OBJDIR)
 
-# Run linting
-lint:
-	@echo "[INFO] Running linter..."
-	@find src tests -name "*.c" -o -name "*.h" | xargs clang-format -i
-	@find src -name "*.c" -o -name "*.h" | xargs clang-tidy --config-file=.clang-tidy
-	@echo "[SUCCESS] Linting passed"
+$(OBJDIR)/%.o: $(SRCDIR)/%.c
+	$(CC) $(CFLAGS) -c $< -o $@
 
-# Run all tests (logic + GUI)
-test:
-	@echo "[INFO] Running all tests (logic + GUI)..."
-	@mkdir -p build_test
-	@cd build_test && cmake .. -DBUILD_TESTS=ON -DBUILD_GUI_TESTS=ON -DENABLE_COVERAGE=OFF
-	@cd build_test && make -j$(nproc)
-	@cd build_test && ctest --output-on-failure
-	@echo "[INFO] Running memory checks with Valgrind..."
-	@cd build_test && valgrind --leak-check=full --error-exitcode=1 ./test_config
-	@cd build_test && valgrind --leak-check=full --error-exitcode=1 ./test_safety
-	@cd build_test && valgrind --leak-check=full --error-exitcode=1 ./test_gui
-	@echo "[SUCCESS] All tests passed"
+$(TARGET): $(OBJS)
+	$(CC) -o $(TARGET) $(OBJS) $(LIBS)
 
-# Full CI in Docker (lint + test + safety)
-ci:
-	@echo "[INFO] Running full CI pipeline in Docker..."
-	@docker build -f docker/Dockerfile.ci -t config-app-ci .
-	@docker run --rm -v $(PWD):/app config-app-ci
-
-# Clean everything
 clean:
-	@echo "[INFO] Cleaning..."
-	@rm -rf build build_test config_gui build_test_gui
-	@echo "[SUCCESS] Clean complete"
+	rm -rf $(OBJDIR) $(TARGET)
 
-# Install dependencies (Ubuntu/Debian)
-setup:
-	@echo "[INFO] Installing dependencies for local development..."
-	@sudo apt-get update
-	@sudo apt-get install -y build-essential cmake libgtk-3-dev clang clang-tidy clang-format valgrind
-	@echo "[SUCCESS] Dependencies installed"
+run: $(TARGET)
+	./$(TARGET)
 
-# Help
-help:
-	@echo "Available commands:"
-	@echo "  make build      - Build Linux GUI application locally"
-	@echo "  make lint       - Run linter and formatter"
-	@echo "  make test       - Run all tests (logic + GUI)"
-	@echo "  make ci         - Run full CI pipeline in Docker"
-	@echo "  make clean      - Clean build artifacts"
-	@echo "  make setup      - Install dependencies for local development"
-	@echo ""
-	@echo "Quick start:"
-	@echo "  make setup      # Install dependencies (first time only)"
-	@echo "  make build      # Build the application"
-	@echo "  ./config_gui    # Run the GUI application"
-	@echo "  make test       # Run tests"
-	@echo "  make ci         # Full quality checks in Docker"
+.PHONY: all clean run
