@@ -15,18 +15,19 @@ WORKDIR /app
 # Copy source code
 COPY src/ ./src/
 
-# Build the executable
+# Build the executable directly
 RUN gcc -Wall -Wextra -Wno-unused-parameter -O2 \
     `pkg-config --cflags gtk+-3.0 webkit2gtk-4.1` \
-    -c src/main.c -o main.o
-
-RUN gcc -Wall -Wextra -Wno-unused-parameter -O2 \
+    -c src/main.c -o main.o && \
+    gcc -Wall -Wextra -Wno-unused-parameter -O2 \
     `pkg-config --cflags gtk+-3.0 webkit2gtk-4.1` \
-    -c src/config.c -o config.o
+    -c src/config.c -o config.o && \
+    gcc -o config_editor main.o config.o \
+    `pkg-config --libs gtk+-3.0 webkit2gtk-4.1` && \
+    rm *.o
 
-RUN gcc -o config_editor main.o config.o \
-    `pkg-config --libs gtk+-3.0 webkit2gtk-4.1`
+# Verify the executable exists
+RUN test -f /app/config_editor && echo "✓ Executable built successfully" || (echo "✗ Executable not found" && exit 1)
 
-RUN rm -f *.o
-
-CMD ["/bin/bash"]
+# Keep the container alive for copying
+CMD ["/bin/sh", "-c", "while true; do sleep 1; done"]

@@ -1,6 +1,6 @@
-- GUI in HTML
+- Add Lint, memory checks
+- Test on empty docker
 - Layer separation to make Frontend Language-agnostic (later reuse with android)
-- Makefile and Docker Builds only, local exe
 - Build AppImage
 - Open Port, Close Port
 - Listen on Port, write new messages
