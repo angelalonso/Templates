@@ -124,7 +124,12 @@ int config_write(const char *key, const char *value) {
     int var_found = 0;
     
     if (file) {
-        while (fgets(lines[line_count], MAX_LINE_LEN, file) && line_count < MAX_LINES - 1) {
+        // Read existing lines with bounds check
+        while (line_count < MAX_LINES - 1) {
+            if (!fgets(lines[line_count], MAX_LINE_LEN, file)) {
+                break;
+            }
+            
             char temp_line[MAX_LINE_LEN];
             size_t len = strlen(lines[line_count]);
             if (len >= MAX_LINE_LEN) {
@@ -146,8 +151,12 @@ int config_write(const char *key, const char *value) {
     }
     
     if (!var_found) {
-        snprintf(lines[line_count], MAX_LINE_LEN, "%s: %s\n", key, value);
-        line_count++;
+        if (line_count < MAX_LINES) {
+            snprintf(lines[line_count], MAX_LINE_LEN, "%s: %s\n", key, value);
+            line_count++;
+        } else {
+            return 0; // Config file too large
+        }
     }
     
     file = fopen(CONFIG_FILE, "w");
@@ -168,23 +177,5 @@ int config_read_text(char *output, size_t output_size) {
 }
 
 int config_write_text(const char *value) {
-    printf("[Config] Writing text value: '%s'\n", value);
-    int result = config_write("text", value);
-    printf("[Config] Write result: %d\n", result);
-    
-    // Verify the write
-    char verify[4096];
-    if (config_read_text(verify, sizeof(verify))) {
-        printf("[Config] Verification read: '%s'\n", verify);
-        if (strcmp(verify, value) == 0) {
-            printf("[Config] Write verified successfully\n");
-        } else {
-            printf("[Config] WARNING: Write verification failed! Expected '%s', got '%s'\n", 
-                   value, verify);
-        }
-    } else {
-        printf("[Config] WARNING: Could not verify write\n");
-    }
-    
-    return result;
+    return config_write("text", value);
 }

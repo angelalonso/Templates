@@ -214,6 +214,8 @@ int api_handle_request(const ApiRequest *request, ApiResponse *response) {
     return 0;
 }
 
+// Unused, here in case its needed later
+#if 0
 const char *api_format_response(const ApiResponse *response) {
     static char formatted[8192];
     int len = snprintf(formatted, sizeof(formatted), 
@@ -237,3 +239,4 @@ const char *api_format_response(const ApiResponse *response) {
     
     return formatted;
 }
+#endif

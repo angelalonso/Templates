@@ -1,3 +1,6 @@
+- Proper tests
+- Proper CI
+- Avoid repeated stuff on docker
 - Open Port, Close Port
 - Listen on Port, write new messages
 - Negotiate encryption

@@ -83,7 +83,8 @@ static char* read_file(const char* path, size_t* size) {
         return NULL;
     }
     
-    size_t bytes_read = fread(buffer, 1, file_size, file);
+    // Cast to void to explicitly ignore unused result
+    (void)fread(buffer, 1, file_size, file);
     buffer[file_size] = '\0';
     *size = file_size;
     
