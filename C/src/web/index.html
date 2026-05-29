@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='UTF-8'>
+    <title>Configuration Editor</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Configuration Editor</h1>
+        </div>
+        <div class="content">
+            <div class="display-area">
+                <h2>Current Configuration:</h2>
+                <div class="config-display" id="configDisplay">
+                    <div class="loading">Loading...</div>
+                </div>
+            </div>
+            <div class="button-area">
+                <button class="btn btn-primary" id="editBtn">✏️ Edit</button>
+                <button class="btn btn-secondary" id="refreshBtn">🔄 Refresh</button>
+            </div>
+            <div class="status" id="statusLabel">
+                <span class="status-text">Ready</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Debug console -->
+    <div class="debug-console" id="debugConsole">
+        <div class="debug-header">
+            <strong>🐛 Debug Console</strong>
+            <button id="clearDebugBtn">Clear</button>
+        </div>
+        <div class="debug-content" id="debugContent">
+            <div class="debug-entry">[System] Page loaded</div>
+        </div>
+    </div>
+    
+    <script src="/app.js"></script>
+</body>
+</html>

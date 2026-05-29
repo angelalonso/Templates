@@ -1,90 +1,106 @@
-#include "config.h"
+#include "config_manager.h"
 #include <ctype.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+#define MAX_KEY_LEN 64
+#define MAX_VALUE_LEN 4096
+#define MAX_LINE_LEN 4096
 #define MAX_LINES 100
+#define CONFIG_FILE "cfg.yml"
 
-char *trim(char *str) {
+typedef struct {
+    char key[MAX_KEY_LEN];
+    char value[MAX_VALUE_LEN];
+} ConfigEntry;
+
+static char *trim(char *str) {
     char *end = NULL;
-
+    
     while (isspace((unsigned char)*str)) {
         str++;
     }
-
+    
     if (*str == 0) {
         return str;
     }
-
+    
     end = str + strlen(str) - 1;
     while (end > str && isspace((unsigned char)*end)) {
         end--;
     }
-
+    
     end[1] = '\0';
     return str;
 }
 
-int parse_yaml_line(const char *line, ConfigEntry *entry) {
+static int parse_yaml_line(const char *line, ConfigEntry *entry) {
     char buffer[MAX_LINE_LEN];
     char *colon_pos = NULL;
     char *key_start = NULL;
     char *value_start = NULL;
-
+    
     if (!line || !entry) {
         return 0;
     }
-
-    // Use memcpy with explicit bounds check instead of strncpy
+    
     size_t len = strlen(line);
     if (len >= MAX_LINE_LEN) {
         len = MAX_LINE_LEN - 1;
     }
     memcpy(buffer, line, len);
     buffer[len] = '\0';
-
+    
     colon_pos = strchr(buffer, ':');
     if (!colon_pos) {
         return 0;
     }
-
+    
     *colon_pos = '\0';
     key_start = trim(buffer);
     value_start = trim(colon_pos + 1);
-
-    // Use memcpy with bounds check
+    
     len = strlen(key_start);
     if (len >= MAX_KEY_LEN) {
         len = MAX_KEY_LEN - 1;
     }
     memcpy(entry->key, key_start, len);
     entry->key[len] = '\0';
-
+    
     len = strlen(value_start);
     if (len >= MAX_VALUE_LEN) {
         len = MAX_VALUE_LEN - 1;
     }
     memcpy(entry->value, value_start, len);
     entry->value[len] = '\0';
-
+    
     return 1;
 }
 
-int read_config(const char *var_name, char *output, size_t output_size) {
+int config_init(void) {
+    FILE *file = fopen(CONFIG_FILE, "a");
+    if (file) {
+        fclose(file);
+        return 1;
+    }
+    return 0;
+}
+
+int config_read(const char *key, char *output, size_t output_size) {
     FILE *file = fopen(CONFIG_FILE, "r");
     if (!file) {
         return 0;
     }
-
+    
     char line[MAX_LINE_LEN];
     ConfigEntry entry;
     int found = 0;
-
+    
     while (fgets(line, sizeof(line), file)) {
         if (parse_yaml_line(line, &entry)) {
-            if (strcmp(entry.key, var_name) == 0) {
+            if (strcmp(entry.key, key) == 0) {
                 size_t len = strlen(entry.value);
                 if (len >= output_size) {
                     len = output_size - 1;
@@ -96,17 +112,17 @@ int read_config(const char *var_name, char *output, size_t output_size) {
             }
         }
     }
-
+    
     fclose(file);
     return found;
 }
 
-int write_config(const char *var_name, const char *value) {
+int config_write(const char *key, const char *value) {
     FILE *file = fopen(CONFIG_FILE, "r");
     char lines[MAX_LINES][MAX_LINE_LEN];
     int line_count = 0;
     int var_found = 0;
-
+    
     if (file) {
         while (fgets(lines[line_count], MAX_LINE_LEN, file) && line_count < MAX_LINES - 1) {
             char temp_line[MAX_LINE_LEN];
@@ -116,11 +132,11 @@ int write_config(const char *var_name, const char *value) {
             }
             memcpy(temp_line, lines[line_count], len);
             temp_line[len] = '\0';
-
+            
             ConfigEntry entry;
             if (parse_yaml_line(temp_line, &entry)) {
-                if (strcmp(entry.key, var_name) == 0) {
-                    snprintf(lines[line_count], MAX_LINE_LEN, "%s: %s\n", var_name, value);
+                if (strcmp(entry.key, key) == 0) {
+                    snprintf(lines[line_count], MAX_LINE_LEN, "%s: %s\n", key, value);
                     var_found = 1;
                 }
             }
@@ -128,29 +144,47 @@ int write_config(const char *var_name, const char *value) {
         }
         fclose(file);
     }
-
+    
     if (!var_found) {
-        snprintf(lines[line_count], MAX_LINE_LEN, "%s: %s\n", var_name, value);
+        snprintf(lines[line_count], MAX_LINE_LEN, "%s: %s\n", key, value);
         line_count++;
     }
-
+    
     file = fopen(CONFIG_FILE, "w");
     if (!file) {
         return 0;
     }
-
+    
     for (int i = 0; i < line_count; i++) {
         fprintf(file, "%s", lines[i]);
     }
-
+    
     fclose(file);
     return 1;
 }
 
-int read_text_value(char *output, size_t output_size) {
-    return read_config("text", output, output_size);
+int config_read_text(char *output, size_t output_size) {
+    return config_read("text", output, output_size);
 }
 
-int update_text_value(const char *new_value) {
-    return write_config("text", new_value);
+int config_write_text(const char *value) {
+    printf("[Config] Writing text value: '%s'\n", value);
+    int result = config_write("text", value);
+    printf("[Config] Write result: %d\n", result);
+    
+    // Verify the write
+    char verify[4096];
+    if (config_read_text(verify, sizeof(verify))) {
+        printf("[Config] Verification read: '%s'\n", verify);
+        if (strcmp(verify, value) == 0) {
+            printf("[Config] Write verified successfully\n");
+        } else {
+            printf("[Config] WARNING: Write verification failed! Expected '%s', got '%s'\n", 
+                   value, verify);
+        }
+    } else {
+        printf("[Config] WARNING: Could not verify write\n");
+    }
+    
+    return result;
 }

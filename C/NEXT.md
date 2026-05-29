@@ -1,4 +1,3 @@
-- Layer separation to make Frontend Language-agnostic (later reuse with android)
 - Open Port, Close Port
 - Listen on Port, write new messages
 - Negotiate encryption

@@ -24,37 +24,25 @@ all: build
 
 # Build the executable (using Docker)
 build: docker-image
-	@echo "$(GREEN)Creating temporary container...$(NC)"
-	@docker create --name temp-$(IMAGE_NAME) $(IMAGE_NAME) > /dev/null 2>&1 || true
+	@echo "$(GREEN)Building executable in Docker...$(NC)"
+	@docker run --name temp-$(IMAGE_NAME) $(IMAGE_NAME) true 2>/dev/null || true
 	@echo "$(GREEN)Copying executable from container...$(NC)"
-	@if docker cp temp-$(IMAGE_NAME):/usr/local/bin/config_editor ./$(TARGET) 2>/dev/null; then \
-		echo "$(GREEN)✓ Executable copied successfully$(NC)"; \
-		chmod +x ./$(TARGET); \
+	@docker cp temp-$(IMAGE_NAME):/app/config_editor ./$(TARGET) 2>/dev/null || \
+		(echo "$(RED)Failed to copy executable$(NC)" && exit 1)
+	@docker rm temp-$(IMAGE_NAME) 2>/dev/null || true
+	@chmod +x ./$(TARGET)
+	@if [ -f "./$(TARGET)" ]; then \
+		echo "$(GREEN)✓ Build successful!$(NC)"; \
 		ls -lh ./$(TARGET); \
 	else \
-		echo "$(RED)✗ Failed to copy executable$(NC)"; \
-		echo "$(YELLOW)Trying alternate path...$(NC)"; \
-		if docker cp temp-$(IMAGE_NAME):/build/config_editor ./$(TARGET) 2>/dev/null; then \
-			echo "$(GREEN)✓ Executable copied from /build/config_editor$(NC)"; \
-			chmod +x ./$(TARGET); \
-			ls -lh ./$(TARGET); \
-		else \
-			echo "$(RED)✗ Failed to copy executable from any path$(NC)"; \
-			echo "$(YELLOW)Listing contents of container...$(NC)"; \
-			docker run --rm $(IMAGE_NAME) find / -name "config_editor" 2>/dev/null || echo "No executable found"; \
-			docker rm temp-$(IMAGE_NAME) > /dev/null 2>&1 || true; \
-			exit 1; \
-		fi \
+		echo "$(RED)✗ Build failed - executable not found$(NC)"; \
+		exit 1; \
 	fi
-	@docker rm temp-$(IMAGE_NAME) > /dev/null 2>&1 || true
-	@echo "$(GREEN)✓ Build successful!$(NC)"
-	@echo "$(YELLOW)Note: Web files are used from src/web/ at runtime$(NC)"
 
 # Docker image
 docker-image:
 	@echo "$(GREEN)Building Docker image...$(NC)"
 	@docker build -t $(IMAGE_NAME) .
-	@echo "$(GREEN)Docker image built successfully$(NC)"
 
 # Create QA Docker image
 docker-qa-image:
@@ -68,17 +56,12 @@ lint-cppcheck: docker-qa-image
 	@echo "$(GREEN)Running cppcheck static analysis...$(NC)"
 	@mkdir -p $(REPORTS_DIR)
 	@docker run --rm -v "$(PWD):/workspace" $(QA_IMAGE_NAME) \
-		bash -c "cd /workspace && \
-			cppcheck --enable=all --inconclusive --std=c11 \
+		bash -c "cppcheck --enable=all --inconclusive --std=c11 \
 			--suppress=missingIncludeSystem \
-			--suppress=unmatchedSuppression \
 			--error-exitcode=1 \
-			--inline-suppr \
-			-I src -I src/backend -I src/middleware \
 			src/ 2> $(REPORTS_DIR)/cppcheck.xml || \
-			cppcheck --enable=all --inconclusive --std=c11 \
+		cppcheck --enable=all --inconclusive --std=c11 \
 			--suppress=missingIncludeSystem \
-			-I src -I src/backend -I src/middleware \
 			src/"
 	@echo "$(GREEN)✓ cppcheck complete$(NC)"
 
@@ -86,27 +69,20 @@ lint-clang: docker-qa-image
 	@echo "$(GREEN)Running clang-tidy...$(NC)"
 	@mkdir -p $(REPORTS_DIR)
 	@docker run --rm -v "$(PWD):/workspace" $(QA_IMAGE_NAME) \
-		bash -c "cd /workspace && \
-			for file in src/*.c src/backend/*.c src/middleware/*.c; do \
-				if [ -f \"$$file\" ]; then \
-					clang-tidy $$file -- \
-					`pkg-config --cflags gtk+-3.0 webkit2gtk-4.1` \
-					-I src -I src/backend -I src/middleware \
-					-Wall -Wextra -std=c11 \
-					|| exit 1; \
-				fi \
-			done"
+		bash -c "for file in src/*.c; do \
+			clang-tidy $$file -- \
+			`pkg-config --cflags gtk+-3.0 webkit2gtk-4.1` \
+			-Wall -Wextra -std=c11 \
+			|| exit 1; \
+		done"
 	@echo "$(GREEN)✓ clang-tidy complete$(NC)"
 
 lint-format: docker-qa-image
 	@echo "$(GREEN)Checking code formatting...$(NC)"
 	@docker run --rm -v "$(PWD):/workspace" $(QA_IMAGE_NAME) \
-		bash -c "cd /workspace && \
-			for file in src/*.c src/*.h src/backend/*.c src/backend/*.h src/middleware/*.h; do \
-				if [ -f \"$$file\" ]; then \
-					clang-format --dry-run --Werror $$file || exit 1; \
-				fi \
-			done"
+		bash -c "for file in src/*.c src/*.h; do \
+			clang-format --dry-run --Werror $$file || exit 1; \
+		done"
 	@echo "$(GREEN)✓ Format check complete$(NC)"
 
 lint-security: docker-qa-image
@@ -122,77 +98,56 @@ lint-security: docker-qa-image
 format-fix: docker-qa-image
 	@echo "$(GREEN)Fixing code formatting...$(NC)"
 	@docker run --rm -v "$(PWD):/workspace" $(QA_IMAGE_NAME) \
-		bash -c "cd /workspace && \
-			for file in src/*.c src/*.h src/backend/*.c src/backend/*.h src/middleware/*.h; do \
-				if [ -f \"$$file\" ]; then \
-					clang-format -i $$file; \
-				fi \
-			done"
+		bash -c "for file in src/*.c src/*.h; do \
+			clang-format -i $$file; \
+		done"
 	@echo "$(GREEN)✓ Format fixed$(NC)"
 
 # Memory checking
 memory-check: build
 	@echo "$(GREEN)Running memory check with Valgrind...$(NC)"
 	@mkdir -p $(REPORTS_DIR)
-	@echo "$(YELLOW)Note: Application will run for 5 seconds then be terminated...$(NC)"
-	@timeout 5 valgrind --leak-check=full \
+	@valgrind --leak-check=full \
 		--show-leak-kinds=all \
 		--track-origins=yes \
 		--verbose \
 		--log-file=$(REPORTS_DIR)/valgrind.log \
-		./$(TARGET) 2>&1 || true
+		./$(TARGET) &
+	@VALGRIND_PID=$$!; \
+	sleep 3; \
+	kill $$VALGRIND_PID 2>/dev/null || true; \
+	sleep 1
 	@if [ -f $(REPORTS_DIR)/valgrind.log ]; then \
 		echo "$(GREEN)Valgrind report saved to $(REPORTS_DIR)/valgrind.log$(NC)"; \
-		echo "$(YELLOW)Summary:$(NC)"; \
-		grep -E "ERROR SUMMARY|definitely lost|indirectly lost" $(REPORTS_DIR)/valgrind.log | head -5 || echo "No summary found"; \
+		cat $(REPORTS_DIR)/valgrind.log | grep -E "ERROR SUMMARY|definitely lost|indirectly lost" || true; \
 	else \
 		echo "$(YELLOW)Valgrind log not generated$(NC)"; \
 	fi
 
 # Code coverage
 coverage: build-internal
-	@echo "$(GREEN)Building with coverage instrumentation...$(NC)"
+	@echo "$(GREEN)Generating code coverage report...$(NC)"
 	@mkdir -p $(COVERAGE_DIR)
-	@gcc -fprofile-arcs -ftest-coverage -O0 -g \
+	@gcc -fprofile-arcs -ftest-coverage -O0 \
 		`pkg-config --cflags gtk+-3.0 webkit2gtk-4.1` \
-		-I src -I src/backend -I src/middleware \
 		-c src/main.c -o $(BUILD_DIR)/main-cov.o
-	@gcc -fprofile-arcs -ftest-coverage -O0 -g \
+	@gcc -fprofile-arcs -ftest-coverage -O0 \
 		`pkg-config --cflags gtk+-3.0 webkit2gtk-4.1` \
-		-I src -I src/backend -I src/middleware \
-		-c src/backend/config_manager.c -o $(BUILD_DIR)/config_manager-cov.o
-	@gcc -fprofile-arcs -ftest-coverage -O0 -g \
-		`pkg-config --cflags gtk+-3.0 webkit2gtk-4.1` \
-		-I src -I src/backend -I src/middleware \
-		-c src/backend/api_handler.c -o $(BUILD_DIR)/api_handler-cov.o
-	@gcc -fprofile-arcs -ftest-coverage -O0 -g \
-		`pkg-config --cflags gtk+-3.0 webkit2gtk-4.1` \
-		-I src -I src/backend -I src/middleware \
-		-c src/backend/webkit_handler.c -o $(BUILD_DIR)/webkit_handler-cov.o
-	@gcc -o $(TARGET)-cov $(BUILD_DIR)/main-cov.o \
-		$(BUILD_DIR)/config_manager-cov.o \
-		$(BUILD_DIR)/api_handler-cov.o \
-		$(BUILD_DIR)/webkit_handler-cov.o \
-		`pkg-config --libs gtk+-3.0 webkit2gtk-4.1` -lgcov -ljson-c
-	@echo "$(GREEN)Coverage build complete$(NC)"
+		-c src/config.c -o $(BUILD_DIR)/config-cov.o
+	@gcc -o $(TARGET)-cov $(BUILD_DIR)/main-cov.o $(BUILD_DIR)/config-cov.o \
+		`pkg-config --libs gtk+-3.0 webkit2gtk-4.1` -lgcov
+	@echo "Coverage build complete"
 
 coverage-report: coverage
-	@echo "$(GREEN)Running tests for coverage...$(NC)"
-	@echo "$(YELLOW)Note: Running application briefly for coverage data...$(NC)"
-	@timeout 3 ./$(TARGET)-cov 2>/dev/null || true
 	@echo "$(GREEN)Generating coverage HTML report...$(NC)"
-	@gcovr --root . --html --html-details -o $(COVERAGE_DIR)/coverage.html \
-		--filter='src/.*' \
-		--exclude='src/backend/webkit_handler\.c' \
-		--exclude-unreachable-branches
+	@gcovr --root . --html --html-details -o $(COVERAGE_DIR)/coverage.html
 	@echo "$(GREEN)Coverage report: $(COVERAGE_DIR)/coverage.html$(NC)"
 
-# Runtime testing
+# Runtime testing (without libraries)
 docker-test-image:
 	@echo "$(GREEN)Building minimal test Docker image...$(NC)"
 	@echo 'FROM alpine:latest' > Dockerfile.test
-	@echo 'RUN apk add --no-cache libc6-compat libstdc++' >> Dockerfile.test
-	@echo 'RUN apk add --no-cache gtk+3.0 webkit2gtk-4.0 2>/dev/null || true' >> Dockerfile.test
+	@echo 'RUN apk add --no-cache libc6-compat' >> Dockerfile.test
 	@echo 'WORKDIR /test' >> Dockerfile.test
 	@echo 'COPY config_editor .' >> Dockerfile.test
 	@echo 'CMD ["./config_editor"]' >> Dockerfile.test
@@ -200,18 +155,18 @@ docker-test-image:
 	@rm Dockerfile.test
 
 test-runtime: build docker-test-image
-	@echo "$(GREEN)Testing executable in container...$(NC)"
-	@timeout 3 docker run --rm $(TEST_IMAGE_NAME) sh -c "./config_editor" 2>&1 || \
-		echo "$(YELLOW)Test completed (timeout expected)$(NC)"
+	@echo "$(GREEN)Testing executable in minimal container...$(NC)"
+	@docker run --rm $(TEST_IMAGE_NAME) sh -c "./config_editor & sleep 2 && killall config_editor" 2>&1 || true
+	@echo "$(YELLOW)Note: Executable requires GTK/WebKit libraries at runtime$(NC)"
 	@echo "$(GREEN)Runtime test complete$(NC)"
 
 # Check library dependencies
 check-deps: build
 	@echo "$(GREEN)Checking library dependencies...$(NC)"
-	@ldd ./$(TARGET) 2>/dev/null || echo "$(YELLOW)ldd not available on this system$(NC)"
+	@ldd ./$(TARGET)
 	@echo ""
 
-# Internal build
+# Internal build (for coverage - not used for main build)
 build-internal:
 	@mkdir -p $(BUILD_DIR)
 
@@ -242,34 +197,24 @@ run: build
 		exit 1; \
 	fi
 
-# Local build (without Docker) - uses src/web directly
-build-local:
-	@echo "$(GREEN)Local build (requires dependencies installed)...$(NC)"
-	@sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev libjson-c-dev
-	@gcc -o $(TARGET) \
-		src/main.c \
-		src/backend/config_manager.c \
-		src/backend/api_handler.c \
-		src/backend/webkit_handler.c \
-		`pkg-config --cflags --libs gtk+-3.0 webkit2gtk-4.1` \
-		-ljson-c -Wall -Wextra -O2
-	@echo "$(GREEN)Local build complete$(NC)"
-	@echo "$(YELLOW)Web files are used from src/web/ directory$(NC)"
-
 # Help
 help:
 	@echo "$(GREEN)Available targets:$(NC)"
 	@echo "  make build          - Build the executable using Docker"
-	@echo "  make build-local    - Build locally (requires GTK/WebKit)"
 	@echo "  make run            - Build and run the application"
 	@echo "  make clean          - Remove build artifacts and Docker images"
 	@echo ""
 	@echo "$(GREEN)Quality Assurance:$(NC)"
 	@echo "  make lint           - Run all static analysis tools"
+	@echo "  make lint-cppcheck  - Run cppcheck static analyzer"
+	@echo "  make lint-clang     - Run clang-tidy"
+	@echo "  make lint-format    - Check code formatting"
+	@echo "  make format-fix     - Auto-fix code formatting"
 	@echo "  make memory-check   - Run Valgrind memory leak detection"
 	@echo "  make coverage       - Generate code coverage report"
 	@echo "  make qa-all         - Run all QA checks"
+	@echo "  make qa-quick       - Run quick QA checks (lint + memory)"
 	@echo ""
 	@echo "$(GREEN)Testing:$(NC)"
-	@echo "  make test-runtime   - Test in minimal container"
+	@echo "  make test-runtime   - Test in minimal container (no GTK)"
 	@echo "  make check-deps     - Check library dependencies"

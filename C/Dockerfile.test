@@ -1,5 +1,0 @@
-FROM alpine:latest
-RUN apk add --no-cache libc6-compat
-WORKDIR /test
-COPY config_editor .
-CMD ["./config_editor"]

@@ -1,33 +1,57 @@
-FROM ubuntu:22.04
+# Dockerfile
+FROM ubuntu:22.04 AS builder
 
-ENV DEBIAN_FRONTEND=noninteractive
-
-# Install build dependencies
 RUN apt-get update && apt-get install -y \
     build-essential \
     pkg-config \
     libgtk-3-dev \
     libwebkit2gtk-4.1-dev \
+    libjson-c-dev \
+    git \
     && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /app
+WORKDIR /build
 
-# Copy source code
-COPY src/ ./src/
+# Copy source files from src directory
+COPY src/main.c .
+COPY src/backend/ ./backend/
+COPY src/middleware/ ./middleware/
+COPY src/web/ ./web/
 
-# Build the executable directly
-RUN gcc -Wall -Wextra -Wno-unused-parameter -O2 \
-    `pkg-config --cflags gtk+-3.0 webkit2gtk-4.1` \
-    -c src/main.c -o main.o && \
-    gcc -Wall -Wextra -Wno-unused-parameter -O2 \
-    `pkg-config --cflags gtk+-3.0 webkit2gtk-4.1` \
-    -c src/config.c -o config.o && \
-    gcc -o config_editor main.o config.o \
-    `pkg-config --libs gtk+-3.0 webkit2gtk-4.1` && \
-    rm *.o
+# List web files for debugging
+RUN echo "=== Web files in build ===" && ls -la ./web/
 
-# Verify the executable exists
-RUN test -f /app/config_editor && echo "✓ Executable built successfully" || (echo "✗ Executable not found" && exit 1)
+# Build the application
+RUN gcc -o config_editor \
+    main.c \
+    backend/config_manager.c \
+    backend/api_handler.c \
+    backend/webkit_handler.c \
+    $(pkg-config --cflags --libs gtk+-3.0 webkit2gtk-4.1) \
+    -ljson-c -Wall -Wextra -O2 && \
+    echo "Build successful!" && \
+    ls -la config_editor
 
-# Keep the container alive for copying
-CMD ["/bin/sh", "-c", "while true; do sleep 1; done"]
+# Runtime stage
+FROM ubuntu:22.04 AS runtime
+RUN apt-get update && apt-get install -y \
+    libgtk-3-0 \
+    libwebkit2gtk-4.1-0 \
+    libjson-c5 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create the web directory
+RUN mkdir -p /usr/local/share/config-editor/web
+
+# Copy from builder stage
+COPY --from=builder /build/config_editor /usr/local/bin/config_editor
+COPY --from=builder /build/web/ /usr/local/share/config-editor/web/
+
+# Verify web files were copied
+RUN echo "=== Web files in runtime ===" && ls -la /usr/local/share/config-editor/web/
+
+# Set working directory
+WORKDIR /usr/local/share/config-editor
+
+# Run the application
+CMD ["config_editor"]
