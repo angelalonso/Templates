@@ -1,0 +1,12 @@
+.git
+*.o
+*.so
+*.a
+config_editor
+build/
+coverage/
+reports/
+*.log
+*.yml
+*.yaml
+!tests/test_config.yml

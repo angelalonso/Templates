@@ -1,8 +1,10 @@
-- GUI in HTML
-- Layer separation to make Frontend Language-agnostic (later reuse with android)
-- Makefile and Docker Builds only, local exe
-- Build AppImage
+- Proper tests
+- Proper CI
+- Avoid repeated stuff on docker
 - Open Port, Close Port
 - Listen on Port, write new messages
 - Negotiate encryption
 - Encrypt and Decrypt
+
+WISHLIST - not easy to get done
+- Possible to encapsulate like AppImage or flatpak??

@@ -1,2 +1,29 @@
 build/**
 build_test_gui/**
+# Build artifacts
+config_editor
+config_editor-*
+obj/
+*.o
+*.so
+*.a
+
+# Coverage reports
+coverage/
+*.gcda
+*.gcno
+*.gcov
+
+# Profiling
+gmon.out
+*.prof
+
+# Reports
+reports/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+

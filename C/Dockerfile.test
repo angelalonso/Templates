@@ -1,0 +1,6 @@
+FROM alpine:latest
+RUN apk add --no-cache libc6-compat libstdc++
+RUN apk add --no-cache gtk+3.0 webkit2gtk-4.0 2>/dev/null || true
+WORKDIR /test
+COPY config_editor .
+CMD ["./config_editor"]
