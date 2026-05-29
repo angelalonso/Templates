@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -O2 `pkg-config --cflags gtk+-3.0 webkit2gtk-4.1`
+CFLAGS = -Wall -Wextra -Wno-unused-parameter -O2 `pkg-config --cflags gtk+-3.0 webkit2gtk-4.1`
 LIBS = `pkg-config --libs gtk+-3.0 webkit2gtk-4.1`
 TARGET = config_editor
 SRCDIR = src
