@@ -1,9 +1,11 @@
 # Variables
 IMAGE_NAME = config-editor-builder
 QA_IMAGE_NAME = config-editor-qa
+ANDROID_IMAGE_NAME = config-editor-android
 TARGET = config_editor
 REPORTS_DIR = reports
 COVERAGE_DIR = coverage
+ANDROID_APK_OUT = android/app/build/outputs/apk/debug
 
 # Colors for output
 GREEN = \033[0;32m
@@ -16,6 +18,7 @@ NC = \033[0m # No Color
 .PHONY: test memory-check coverage
 .PHONY: ci-all ci-quick
 .PHONY: docker-image docker-qa-image
+.PHONY: build-android clean-android
 
 # Default target
 all: build
@@ -50,6 +53,47 @@ docker-qa-image:
 	@echo "$(GREEN)Building QA Docker image...$(NC)"
 	@docker build -t $(QA_IMAGE_NAME) --target qa -f docker/Dockerfile .
 	@echo "$(GREEN)QA Docker image built successfully$(NC)"
+
+# ============================================
+# ANDROID BUILD TARGETS
+# ============================================
+
+# Build Android APK
+build-android: clean-android
+	@echo "$(GREEN)========================================$(NC)"
+	@echo "$(GREEN)Building Android APK...$(NC)"
+	@echo "$(GREEN)========================================$(NC)"
+	@# Check if Dockerfile.android exists
+	@if [ ! -f "android/Dockerfile.android" ]; then \
+		echo "$(RED)✗ android/Dockerfile.android not found!$(NC)"; \
+		exit 1; \
+	fi
+	@echo "$(GREEN)Building Docker image for Android...$(NC)"
+	@docker build \
+		-f android/Dockerfile.android \
+		-t $(ANDROID_IMAGE_NAME) \
+		.
+	@echo "$(GREEN)Compiling APK inside container...$(NC)"
+	@mkdir -p $(ANDROID_APK_OUT)
+	@docker run --rm \
+		-v "$(PWD)/$(ANDROID_APK_OUT):/out" \
+		$(ANDROID_IMAGE_NAME) \
+		bash -c "./gradlew assembleDebug --no-daemon && cp app/build/outputs/apk/debug/app-debug.apk /out/"
+	@echo ""
+	@echo "$(GREEN)========================================$(NC)"
+	@echo "$(GREEN)✓ Android APK built successfully!$(NC)"
+	@echo "$(GREEN)APK location: $(PWD)/$(ANDROID_APK_OUT)/app-debug.apk$(NC)"
+	@echo "$(GREEN)========================================$(NC)"
+	@ls -lh $(ANDROID_APK_OUT)/app-debug.apk 2>/dev/null || echo "$(YELLOW)APK file not found - check build output$(NC)"
+
+# Clean Android build artifacts
+clean-android:
+	@echo "$(YELLOW)Cleaning Android build artifacts...$(NC)"
+	@# Remove Android Docker image
+	-docker rmi -f $(ANDROID_IMAGE_NAME) 2>/dev/null || true
+	@# Remove APK output directory (optional - comment out if you want to keep APKs)
+	@# rm -rf android/app/build 2>/dev/null || true
+	@echo "$(GREEN)Android clean complete$(NC)"
 
 # ============================================
 # LINTING TARGETS
@@ -229,7 +273,7 @@ ci-quick: lint
 # ============================================
 
 # Clean everything
-clean:
+clean: clean-android
 	@echo "$(YELLOW)Cleaning up...$(NC)"
 	# Remove executable and report directories
 	rm -rf $(TARGET) $(COVERAGE_DIR) $(REPORTS_DIR)
@@ -257,16 +301,21 @@ help:
 	@echo "$(GREEN)Available targets:$(NC)"
 	@echo ""
 	@echo "$(GREEN)Build:$(NC)"
-	@echo "  make build       - Build the executable using Docker"
-	@echo "  make run         - Build and run the application"
-	@echo "  make clean       - Remove build artifacts and Docker images"
+	@echo "  make build          - Build the Linux executable using Docker"
+	@echo "  make build-android  - Build Android APK"
+	@echo "  make run            - Build and run the Linux application"
+	@echo "  make clean          - Remove all build artifacts and Docker images"
+	@echo ""
+	@echo "$(GREEN)Android:$(NC)"
+	@echo "  make build-android  - Build Android APK"
+	@echo "  make clean-android  - Clean Android build artifacts"
 	@echo ""
 	@echo "$(GREEN)CI/CD Pipeline:$(NC)"
-	@echo "  make ci-all      - Run all checks (linting, memory, coverage)"
-	@echo "  make ci-quick    - Run quick checks (linting only)"
+	@echo "  make ci-all         - Run all checks (linting, memory, coverage)"
+	@echo "  make ci-quick       - Run quick checks (linting only)"
 	@echo ""
 	@echo "$(GREEN)Individual Checks:$(NC)"
-	@echo "  make lint            - Run all linting checks"
-	@echo "  make memory-check    - Memory leak detection"
-	@echo "  make coverage        - Code coverage report"
-	@echo "  make format-fix      - Auto-fix code formatting"
+	@echo "  make lint           - Run all linting checks"
+	@echo "  make memory-check   - Memory leak detection"
+	@echo "  make coverage       - Code coverage report"
+	@echo "  make format-fix     - Auto-fix code formatting"
