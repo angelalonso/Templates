@@ -64,13 +64,13 @@ build-android: clean-android
 	@echo "$(GREEN)Building Android APK...$(NC)"
 	@echo "$(GREEN)========================================$(NC)"
 	@# Check if Dockerfile.android exists
-	@if [ ! -f "android/Dockerfile.android" ]; then \
-		echo "$(RED)✗ android/Dockerfile.android not found!$(NC)"; \
+	@if [ ! -f "docker/Dockerfile.android" ]; then \
+		echo "$(RED)✗ docker/Dockerfile.android not found!$(NC)"; \
 		exit 1; \
 	fi
 	@echo "$(GREEN)Building Docker image for Android...$(NC)"
 	@docker build \
-		-f android/Dockerfile.android \
+		-f docker/Dockerfile.android \
 		-t $(ANDROID_IMAGE_NAME) \
 		.
 	@echo "$(GREEN)Compiling APK inside container...$(NC)"
