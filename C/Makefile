@@ -42,13 +42,13 @@ build: docker-image
 # Build Docker image (runtime stage)
 docker-image:
 	@echo "$(GREEN)Building Docker image...$(NC)"
-	@docker build -t $(IMAGE_NAME) --target runtime .
+	@docker build -t $(IMAGE_NAME) --target runtime -f docker/Dockerfile .
 	@echo "$(GREEN)Docker image built successfully$(NC)"
 
 # Build QA Docker image with all analysis tools
 docker-qa-image:
 	@echo "$(GREEN)Building QA Docker image...$(NC)"
-	@docker build -t $(QA_IMAGE_NAME) --target qa .
+	@docker build -t $(QA_IMAGE_NAME) --target qa -f docker/Dockerfile .
 	@echo "$(GREEN)QA Docker image built successfully$(NC)"
 
 # ============================================
