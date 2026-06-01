@@ -19,6 +19,7 @@ NC = \033[0m # No Color
 .PHONY: ci-all ci-quick
 .PHONY: docker-image docker-qa-image
 .PHONY: build-android clean-android
+.PHONY: test-android stop-android-emulator start-android-emulator clean-android-emulator
 
 # Default target
 all: build
@@ -94,6 +95,128 @@ clean-android:
 	@# Remove APK output directory (optional - comment out if you want to keep APKs)
 	@# rm -rf android/app/build 2>/dev/null || true
 	@echo "$(GREEN)Android clean complete$(NC)"
+
+# ============================================
+# ANDROID TESTING TARGETS
+# ============================================
+
+# Test Android APK on emulator (Docker-based)
+test-android: build-android
+	@echo "$(GREEN)========================================$(NC)"
+	@echo "$(GREEN)Starting Android emulator and testing APK...$(NC)"
+	@echo "$(GREEN)========================================$(NC)"
+	@# Check if KVM is available
+	@echo "$(YELLOW)Checking KVM acceleration...$(NC)"
+	@if [ ! -e /dev/kvm ]; then \
+		echo "$(RED)✗ /dev/kvm not found. Please enable virtualization in BIOS and ensure KVM is installed.$(NC)"; \
+		echo "$(YELLOW)Run: sudo apt install cpu-checker && kvm-ok$(NC)"; \
+		exit 1; \
+	fi
+	@echo "$(GREEN)✓ KVM available$(NC)"
+	@# Check if ADB is installed
+	@echo "$(YELLOW)Checking ADB installation...$(NC)"
+	@if ! command -v adb >/dev/null 2>&1; then \
+		echo "$(YELLOW)ADB not found. Installing...$(NC)"; \
+		sudo apt update && sudo apt install -y adb; \
+	fi
+	@echo "$(GREEN)✓ ADB available$(NC)"
+	@# Stop and remove existing emulator container if running
+	@echo "$(YELLOW)Cleaning up previous emulator...$(NC)"
+	-docker stop android-emulator 2>/dev/null || true
+	-docker rm android-emulator 2>/dev/null || true
+	@# Start fresh emulator container
+	@echo "$(GREEN)Starting Android emulator (this takes 30-60 seconds)...$(NC)"
+	@docker run -d --privileged \
+		--name android-emulator \
+		-p 6080:6080 \
+		-p 5554:5554 \
+		-p 5555:5555 \
+		-e EMULATOR_DEVICE="Samsung Galaxy S10" \
+		-e WEB_VNC=true \
+		--device /dev/kvm \
+		budtmo/docker-android:emulator_11.0 > /dev/null 2>&1
+	@# Wait for emulator to boot
+	@echo "$(YELLOW)Waiting for emulator to boot (60 seconds)...$(NC)"
+	@echo -n "Progress: "
+	@for i in 1 2 3 4 5 6; do \
+		sleep 10; \
+		echo -n "$$i0s "; \
+	done
+	@echo ""
+	@echo "$(GREEN)✓ Emulator started$(NC)"
+	@# Connect ADB
+	@echo "$(YELLOW)Connecting ADB...$(NC)"
+	@adb kill-server > /dev/null 2>&1
+	@adb start-server > /dev/null 2>&1
+	@sleep 2
+	@adb connect localhost:5555 > /dev/null 2>&1
+	@sleep 2
+	@# Verify connection
+	@if adb devices | grep -q "localhost:5555.*device"; then \
+		echo "$(GREEN)✓ ADB connected successfully$(NC)"; \
+	else \
+		echo "$(RED)✗ ADB connection failed$(NC)"; \
+		adb devices; \
+		docker logs android-emulator --tail 20; \
+		exit 1; \
+	fi
+	@# Install APK
+	@APK_PATH="$(PWD)/$(ANDROID_APK_OUT)/app-debug.apk"; \
+	if [ ! -f "$$APK_PATH" ]; then \
+		echo "$(RED)✗ APK not found at $$APK_PATH$(NC)"; \
+		exit 1; \
+	fi
+	@echo "$(GREEN)Installing APK...$(NC)"
+	@adb install -r "$(PWD)/$(ANDROID_APK_OUT)/app-debug.apk" 2>&1 | grep -v "Performing Streamed Install"
+	@if [ $$? -eq 0 ]; then \
+		echo "$(GREEN)✓ APK installed successfully$(NC)"; \
+	else \
+		echo "$(RED)✗ APK installation failed$(NC)"; \
+		exit 1; \
+	fi
+	@# Wait for launcher to refresh
+	@echo "$(YELLOW)Waiting for launcher to refresh (15 seconds)...$(NC)"
+	@for i in 1 2 3; do \
+		sleep 5; \
+		echo -n "$$i/3 "; \
+	done
+	@echo ""
+	@# Force launcher refresh
+	@adb shell am force-stop com.android.launcher3 > /dev/null 2>&1
+	@echo "$(GREEN)========================================$(NC)"
+	@echo "$(GREEN)✓ Android APK testing complete!$(NC)"
+	@echo "$(GREEN)========================================$(NC)"
+	@echo "📱 Emulator access:"
+	@echo "  - VNC Web UI:    http://localhost:6080 (password: 123mudar)"
+	@echo "  - ADB:           adb connect localhost:5555"
+	@echo ""
+	@echo "🔧 Commands to interact:"
+	@echo "  - Stop emulator: make stop-android-emulator"
+	@echo "  - Start again:   make start-android-emulator"
+	@echo "  - Remove:        make clean-android-emulator"
+	@echo ""
+	@echo "$(YELLOW)Emulator continues running in background.$(NC)"
+	@echo "$(GREEN)Open http://localhost:6080 in your browser to see the app!$(NC)"
+
+# Stop Android emulator
+stop-android-emulator:
+	@echo "$(YELLOW)Stopping Android emulator...$(NC)"
+	@docker stop android-emulator 2>/dev/null || echo "Emulator not running"
+	@echo "$(GREEN)✓ Emulator stopped$(NC)"
+
+# Start Android emulator (if stopped)
+start-android-emulator:
+	@echo "$(YELLOW)Starting Android emulator...$(NC)"
+	@docker start android-emulator 2>/dev/null || echo "Emulator not found. Run 'make test-android' first."
+	@echo "$(GREEN)✓ Emulator started$(NC)"
+	@echo "Access at http://localhost:6080 (password: 123mudar)"
+
+# Clean Android emulator container
+clean-android-emulator:
+	@echo "$(YELLOW)Removing Android emulator container...$(NC)"
+	@docker stop android-emulator 2>/dev/null || true
+	@docker rm android-emulator 2>/dev/null || true
+	@echo "$(GREEN)✓ Emulator removed$(NC)"
 
 # ============================================
 # LINTING TARGETS
@@ -273,7 +396,7 @@ ci-quick: lint
 # ============================================
 
 # Clean everything
-clean: clean-android
+clean: clean-android clean-android-emulator
 	@echo "$(YELLOW)Cleaning up...$(NC)"
 	# Remove executable and report directories
 	rm -rf $(TARGET) $(COVERAGE_DIR) $(REPORTS_DIR)
@@ -302,13 +425,18 @@ help:
 	@echo ""
 	@echo "$(GREEN)Build:$(NC)"
 	@echo "  make build          - Build the Linux executable using Docker"
-	@echo "  make build-android  - Build Android APK"
 	@echo "  make run            - Build and run the Linux application"
 	@echo "  make clean          - Remove all build artifacts and Docker images"
 	@echo ""
 	@echo "$(GREEN)Android:$(NC)"
 	@echo "  make build-android  - Build Android APK"
 	@echo "  make clean-android  - Clean Android build artifacts"
+	@echo ""
+	@echo "$(GREEN)Android Testing:$(NC)"
+	@echo "  make test-android        - Build APK, start emulator, install and test APK"
+	@echo "  make stop-android-emulator - Stop the running emulator"
+	@echo "  make start-android-emulator - Start a stopped emulator"
+	@echo "  make clean-android-emulator - Remove emulator container"
 	@echo ""
 	@echo "$(GREEN)CI/CD Pipeline:$(NC)"
 	@echo "  make ci-all         - Run all checks (linting, memory, coverage)"
