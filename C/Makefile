@@ -99,7 +99,6 @@ clean-android:
 # ============================================
 # ANDROID TESTING TARGETS
 # ============================================
-
 # Test Android APK on emulator (Docker-based)
 test-android: build-android
 	@echo "$(GREEN)========================================$(NC)"
@@ -124,6 +123,9 @@ test-android: build-android
 	@echo "$(YELLOW)Cleaning up previous emulator...$(NC)"
 	-docker stop android-emulator 2>/dev/null || true
 	-docker rm android-emulator 2>/dev/null || true
+	@# Kill any existing ADB server and devices
+	@echo "$(YELLOW)Resetting ADB connections...$(NC)"
+	@adb kill-server > /dev/null 2>&1
 	@# Start fresh emulator container
 	@echo "$(GREEN)Starting Android emulator (this takes 30-60 seconds)...$(NC)"
 	@docker run -d --privileged \
@@ -144,30 +146,57 @@ test-android: build-android
 	done
 	@echo ""
 	@echo "$(GREEN)✓ Emulator started$(NC)"
-	@# Connect ADB
+	@# Connect ADB with retry logic
 	@echo "$(YELLOW)Connecting ADB...$(NC)"
-	@adb kill-server > /dev/null 2>&1
 	@adb start-server > /dev/null 2>&1
 	@sleep 2
-	@adb connect localhost:5555 > /dev/null 2>&1
-	@sleep 2
-	@# Verify connection
-	@if adb devices | grep -q "localhost:5555.*device"; then \
-		echo "$(GREEN)✓ ADB connected successfully$(NC)"; \
-	else \
-		echo "$(RED)✗ ADB connection failed$(NC)"; \
+	@# Wait for emulator to be ready for ADB connection
+	@echo "$(YELLOW)Waiting for ADB device...$(NC)"
+	@for i in 1 2 3 4 5 6 7 8 9 10; do \
+		sleep 3; \
+		if adb connect localhost:5555 2>&1 | grep -q "connected"; then \
+			echo "$(GREEN)✓ ADB connected successfully$(NC)"; \
+			break; \
+		fi; \
+		if [ $$i -eq 10 ]; then \
+			echo "$(RED)✗ Failed to connect ADB after 30 seconds$(NC)"; \
+			adb devices; \
+			docker logs android-emulator --tail 20; \
+			exit 1; \
+		fi; \
+		echo -n "."; \
+	done
+	@# Wait a bit more for emulator to fully initialize
+	@sleep 5
+	@# Get the emulator device serial
+	@EMULATOR_SERIAL=$$(adb devices | grep "localhost:5555" | awk '{print $$1}'); \
+	if [ -z "$$EMULATOR_SERIAL" ]; then \
+		echo "$(RED)✗ Could not find emulator device$(NC)"; \
 		adb devices; \
-		docker logs android-emulator --tail 20; \
 		exit 1; \
-	fi
-	@# Install APK
+	fi; \
+	echo "$(GREEN)Using device: $$EMULATOR_SERIAL$(NC)"
+	@# Wait for emulator to be fully booted
+	@echo "$(YELLOW)Waiting for emulator to fully boot...$(NC)"
+	@for i in 1 2 3 4 5 6 7 8 9 10 11 12; do \
+		sleep 5; \
+		if adb -s localhost:5555 shell getprop sys.boot_completed 2>/dev/null | grep -q "1"; then \
+			echo "$(GREEN)✓ Emulator boot completed$(NC)"; \
+			break; \
+		fi; \
+		if [ $$i -eq 12 ]; then \
+			echo "$(YELLOW)Warning: Emulator boot timeout, continuing anyway...$(NC)"; \
+		fi; \
+		echo -n "."; \
+	done
+	@# Install APK using specific device serial
 	@APK_PATH="$(PWD)/$(ANDROID_APK_OUT)/app-debug.apk"; \
 	if [ ! -f "$$APK_PATH" ]; then \
 		echo "$(RED)✗ APK not found at $$APK_PATH$(NC)"; \
 		exit 1; \
 	fi
-	@echo "$(GREEN)Installing APK...$(NC)"
-	@adb install -r "$(PWD)/$(ANDROID_APK_OUT)/app-debug.apk" 2>&1 | grep -v "Performing Streamed Install"
+	@echo "$(GREEN)Installing APK on emulator...$(NC)"
+	@adb -s localhost:5555 install -r "$(PWD)/$(ANDROID_APK_OUT)/app-debug.apk" 2>&1 | grep -v "Performing Streamed Install"
 	@if [ $$? -eq 0 ]; then \
 		echo "$(GREEN)✓ APK installed successfully$(NC)"; \
 	else \
@@ -181,19 +210,20 @@ test-android: build-android
 		echo -n "$$i/3 "; \
 	done
 	@echo ""
-	@# Force launcher refresh
-	@adb shell am force-stop com.android.launcher3 > /dev/null 2>&1
+	@# Force launcher refresh on the specific device
+	@adb -s localhost:5555 shell am force-stop com.android.launcher3 > /dev/null 2>&1
 	@echo "$(GREEN)========================================$(NC)"
 	@echo "$(GREEN)✓ Android APK testing complete!$(NC)"
 	@echo "$(GREEN)========================================$(NC)"
 	@echo "📱 Emulator access:"
 	@echo "  - VNC Web UI:    http://localhost:6080 (password: 123mudar)"
-	@echo "  - ADB:           adb connect localhost:5555"
+	@echo "  - ADB:           adb -s localhost:5555 shell"
 	@echo ""
 	@echo "🔧 Commands to interact:"
 	@echo "  - Stop emulator: make stop-android-emulator"
 	@echo "  - Start again:   make start-android-emulator"
 	@echo "  - Remove:        make clean-android-emulator"
+	@echo "  - Launch app:    adb -s localhost:5555 shell am start -n com.yourpackage/.MainActivity"
 	@echo ""
 	@echo "$(YELLOW)Emulator continues running in background.$(NC)"
 	@echo "$(GREEN)Open http://localhost:6080 in your browser to see the app!$(NC)"
