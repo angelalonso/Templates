@@ -5,7 +5,7 @@ ANDROID_IMAGE_NAME = config-editor-android
 TARGET = config_editor
 REPORTS_DIR = reports
 COVERAGE_DIR = coverage
-ANDROID_APK_OUT = android/app/build/outputs/apk/debug
+ANDROID_APK_OUT = src/android/app/build/outputs/apk/debug
 
 # Colors for output
 GREEN = \033[0;32m
@@ -90,21 +90,19 @@ build-android: clean-android
 # Clean Android build artifacts
 clean-android:
 	@echo "$(YELLOW)Cleaning Android build artifacts...$(NC)"
-	@# Remove Android Docker image
 	-docker rmi -f $(ANDROID_IMAGE_NAME) 2>/dev/null || true
-	@# Remove APK output directory (optional - comment out if you want to keep APKs)
-	@# rm -rf android/app/build 2>/dev/null || true
+	@# Uncomment to also wipe APK output:
+	@# rm -rf src/android/app/build 2>/dev/null || true
 	@echo "$(GREEN)Android clean complete$(NC)"
 
 # ============================================
 # ANDROID TESTING TARGETS
 # ============================================
-# Test Android APK on emulator (Docker-based)
+
 test-android: build-android
 	@echo "$(GREEN)========================================$(NC)"
 	@echo "$(GREEN)Starting Android emulator and testing APK...$(NC)"
 	@echo "$(GREEN)========================================$(NC)"
-	@# Check if KVM is available
 	@echo "$(YELLOW)Checking KVM acceleration...$(NC)"
 	@if [ ! -e /dev/kvm ]; then \
 		echo "$(RED)✗ /dev/kvm not found. Please enable virtualization in BIOS and ensure KVM is installed.$(NC)"; \
@@ -112,21 +110,17 @@ test-android: build-android
 		exit 1; \
 	fi
 	@echo "$(GREEN)✓ KVM available$(NC)"
-	@# Check if ADB is installed
 	@echo "$(YELLOW)Checking ADB installation...$(NC)"
 	@if ! command -v adb >/dev/null 2>&1; then \
 		echo "$(YELLOW)ADB not found. Installing...$(NC)"; \
 		sudo apt update && sudo apt install -y adb; \
 	fi
 	@echo "$(GREEN)✓ ADB available$(NC)"
-	@# Stop and remove existing emulator container if running
 	@echo "$(YELLOW)Cleaning up previous emulator...$(NC)"
 	-docker stop android-emulator 2>/dev/null || true
 	-docker rm android-emulator 2>/dev/null || true
-	@# Kill any existing ADB server and devices
 	@echo "$(YELLOW)Resetting ADB connections...$(NC)"
 	@adb kill-server > /dev/null 2>&1
-	@# Start fresh emulator container
 	@echo "$(GREEN)Starting Android emulator (this takes 30-60 seconds)...$(NC)"
 	@docker run -d --privileged \
 		--name android-emulator \
@@ -137,7 +131,6 @@ test-android: build-android
 		-e WEB_VNC=true \
 		--device /dev/kvm \
 		budtmo/docker-android:emulator_11.0 > /dev/null 2>&1
-	@# Wait for emulator to boot
 	@echo "$(YELLOW)Waiting for emulator to boot (60 seconds)...$(NC)"
 	@echo -n "Progress: "
 	@for i in 1 2 3 4 5 6; do \
@@ -146,11 +139,9 @@ test-android: build-android
 	done
 	@echo ""
 	@echo "$(GREEN)✓ Emulator started$(NC)"
-	@# Connect ADB with retry logic
 	@echo "$(YELLOW)Connecting ADB...$(NC)"
 	@adb start-server > /dev/null 2>&1
 	@sleep 2
-	@# Wait for emulator to be ready for ADB connection
 	@echo "$(YELLOW)Waiting for ADB device...$(NC)"
 	@for i in 1 2 3 4 5 6 7 8 9 10; do \
 		sleep 3; \
@@ -166,9 +157,7 @@ test-android: build-android
 		fi; \
 		echo -n "."; \
 	done
-	@# Wait a bit more for emulator to fully initialize
 	@sleep 5
-	@# Get the emulator device serial
 	@EMULATOR_SERIAL=$$(adb devices | grep "localhost:5555" | awk '{print $$1}'); \
 	if [ -z "$$EMULATOR_SERIAL" ]; then \
 		echo "$(RED)✗ Could not find emulator device$(NC)"; \
@@ -176,7 +165,6 @@ test-android: build-android
 		exit 1; \
 	fi; \
 	echo "$(GREEN)Using device: $$EMULATOR_SERIAL$(NC)"
-	@# Wait for emulator to be fully booted
 	@echo "$(YELLOW)Waiting for emulator to fully boot...$(NC)"
 	@for i in 1 2 3 4 5 6 7 8 9 10 11 12; do \
 		sleep 5; \
@@ -189,7 +177,6 @@ test-android: build-android
 		fi; \
 		echo -n "."; \
 	done
-	@# Install APK using specific device serial
 	@APK_PATH="$(PWD)/$(ANDROID_APK_OUT)/app-debug.apk"; \
 	if [ ! -f "$$APK_PATH" ]; then \
 		echo "$(RED)✗ APK not found at $$APK_PATH$(NC)"; \
@@ -203,14 +190,12 @@ test-android: build-android
 		echo "$(RED)✗ APK installation failed$(NC)"; \
 		exit 1; \
 	fi
-	@# Wait for launcher to refresh
 	@echo "$(YELLOW)Waiting for launcher to refresh (15 seconds)...$(NC)"
 	@for i in 1 2 3; do \
 		sleep 5; \
 		echo -n "$$i/3 "; \
 	done
 	@echo ""
-	@# Force launcher refresh on the specific device
 	@adb -s localhost:5555 shell am force-stop com.android.launcher3 > /dev/null 2>&1
 	@echo "$(GREEN)========================================$(NC)"
 	@echo "$(GREEN)✓ Android APK testing complete!$(NC)"
@@ -255,7 +240,6 @@ clean-android-emulator:
 lint: lint-cppcheck lint-clang lint-format lint-security
 	@echo "$(GREEN)✓ All linting checks passed$(NC)"
 
-# Static analysis with cppcheck
 lint-cppcheck: docker-qa-image
 	@echo "$(GREEN)Running cppcheck static analysis...$(NC)"
 	@mkdir -p $(REPORTS_DIR)
@@ -273,7 +257,6 @@ lint-cppcheck: docker-qa-image
 			|| (echo '$(RED)✗ Issues found - check $(REPORTS_DIR)/cppcheck.xml$(NC)' && exit 1)"
 	@echo "$(GREEN)✓ cppcheck complete$(NC)"
 
-# Clang-tidy for deeper analysis
 lint-clang: docker-qa-image
 	@echo "$(GREEN)Running clang-tidy...$(NC)"
 	@mkdir -p $(REPORTS_DIR)
@@ -283,7 +266,7 @@ lint-clang: docker-qa-image
 				if [ -f \"$$file\" ]; then \
 					echo \"Checking $$file...\"; \
 					clang-tidy $$file -- \
-					`pkg-config --cflags gtk+-3.0 webkit2gtk-4.1` \
+					\`pkg-config --cflags gtk+-3.0 webkit2gtk-4.1\` \
 					-I src -I src/backend -I src/middleware \
 					-Wall -Wextra -std=c11 \
 					|| exit 1; \
@@ -291,7 +274,6 @@ lint-clang: docker-qa-image
 			done"
 	@echo "$(GREEN)✓ clang-tidy complete$(NC)"
 
-# Code formatting check
 lint-format: docker-qa-image
 	@echo "$(GREEN)Checking code formatting...$(NC)"
 	@docker run --rm -v "$(PWD):/workspace" $(QA_IMAGE_NAME) \
@@ -305,7 +287,6 @@ lint-format: docker-qa-image
 			exit $$errors"
 	@echo "$(GREEN)✓ Code formatting is correct$(NC)"
 
-# Security vulnerability scan
 lint-security: docker-qa-image
 	@echo "$(GREEN)Running security analysis...$(NC)"
 	@mkdir -p $(REPORTS_DIR)
@@ -317,7 +298,6 @@ lint-security: docker-qa-image
 	@echo "$(GREEN)✓ Security analysis complete$(NC)"
 	@echo "$(YELLOW)Full report: $(REPORTS_DIR)/security.html$(NC)"
 
-# Auto-fix formatting (not for CI, for developers)
 format-fix: docker-qa-image
 	@echo "$(GREEN)Fixing code formatting...$(NC)"
 	@docker run --rm -v "$(PWD):/workspace" $(QA_IMAGE_NAME) \
@@ -333,7 +313,6 @@ format-fix: docker-qa-image
 # TESTING & MEMORY CHECK
 # ============================================
 
-# Memory leak detection with Valgrind
 memory-check: build
 	@echo "$(GREEN)Running memory check with Valgrind...$(NC)"
 	@mkdir -p $(REPORTS_DIR)
@@ -358,44 +337,38 @@ memory-check: build
 		echo "$(YELLOW)Valgrind log not generated$(NC)"; \
 	fi
 
-# Code coverage analysis
 coverage: docker-qa-image
 	@echo "$(GREEN)Generating code coverage report...$(NC)"
 	@mkdir -p $(COVERAGE_DIR)
 	@docker run --rm -v "$(PWD):/workspace" $(QA_IMAGE_NAME) \
 		bash -c "cd /workspace && \
-			# Compile with coverage flags \
 			gcc -fprofile-arcs -ftest-coverage -O0 -g \
-				`pkg-config --cflags gtk+-3.0 webkit2gtk-4.1` \
+				\`pkg-config --cflags gtk+-3.0 webkit2gtk-4.1\` \
 				-I src -I src/backend -I src/middleware \
 				-c src/main.c -o $(COVERAGE_DIR)/main-cov.o && \
 			gcc -fprofile-arcs -ftest-coverage -O0 -g \
-				`pkg-config --cflags gtk+-3.0 webkit2gtk-4.1` \
+				\`pkg-config --cflags gtk+-3.0 webkit2gtk-4.1\` \
 				-I src -I src/backend -I src/middleware \
 				-c src/backend/config_manager.c -o $(COVERAGE_DIR)/config_manager-cov.o && \
 			gcc -fprofile-arcs -ftest-coverage -O0 -g \
-				`pkg-config --cflags gtk+-3.0 webkit2gtk-4.1` \
+				\`pkg-config --cflags gtk+-3.0 webkit2gtk-4.1\` \
 				-I src -I src/backend -I src/middleware \
 				-c src/backend/api_handler.c -o $(COVERAGE_DIR)/api_handler-cov.o && \
 			gcc -fprofile-arcs -ftest-coverage -O0 -g \
-				`pkg-config --cflags gtk+-3.0 webkit2gtk-4.1` \
+				\`pkg-config --cflags gtk+-3.0 webkit2gtk-4.1\` \
 				-I src -I src/backend -I src/middleware \
 				-c src/backend/webkit_handler.c -o $(COVERAGE_DIR)/webkit_handler-cov.o && \
-			# Link with coverage \
 			gcc -o $(COVERAGE_DIR)/config_editor-cov \
 				$(COVERAGE_DIR)/main-cov.o \
 				$(COVERAGE_DIR)/config_manager-cov.o \
 				$(COVERAGE_DIR)/api_handler-cov.o \
 				$(COVERAGE_DIR)/webkit_handler-cov.o \
-				`pkg-config --libs gtk+-3.0 webkit2gtk-4.1` -lgcov -ljson-c && \
-			# Run the instrumented binary \
+				\`pkg-config --libs gtk+-3.0 webkit2gtk-4.1\` -lgcov -ljson-c && \
 			timeout 3 ./$(COVERAGE_DIR)/config_editor-cov 2>/dev/null || true && \
-			# Generate coverage report \
 			gcovr --root . --html --html-details -o $(COVERAGE_DIR)/coverage.html \
 				--filter='src/.*' \
 				--exclude='src/backend/webkit_handler\.c' \
 				--exclude-unreachable-branches && \
-			# Print summary \
 			gcovr --root . --print-summary \
 				--filter='src/.*' \
 				--exclude='src/backend/webkit_handler\.c'"
@@ -405,7 +378,6 @@ coverage: docker-qa-image
 # CI/CD PIPELINE TARGETS
 # ============================================
 
-# Full CI pipeline (all checks)
 ci-all: lint memory-check coverage
 	@echo "$(GREEN)========================================$(NC)"
 	@echo "$(GREEN)✓ All CI checks passed!$(NC)"
@@ -417,7 +389,6 @@ ci-all: lint memory-check coverage
 	@echo "  - Coverage:    $(COVERAGE_DIR)/coverage.html"
 	@echo "$(GREEN)========================================$(NC)"
 
-# Quick CI (linting only, faster for development)
 ci-quick: lint
 	@echo "$(GREEN)✓ Quick CI checks passed!$(NC)"
 
@@ -425,21 +396,15 @@ ci-quick: lint
 # CLEANUP
 # ============================================
 
-# Clean everything
 clean: clean-android clean-android-emulator
 	@echo "$(YELLOW)Cleaning up...$(NC)"
-	# Remove executable and report directories
 	rm -rf $(TARGET) $(COVERAGE_DIR) $(REPORTS_DIR)
-	# Remove temporary containers
 	-docker rm temp-$(IMAGE_NAME) 2>/dev/null || true
-	# Remove specific images
 	-docker rmi -f $(IMAGE_NAME) 2>/dev/null || true
 	-docker rmi -f $(QA_IMAGE_NAME) 2>/dev/null || true
-	# Remove any dangling/untagged images
 	-docker image prune -f 2>/dev/null || true
 	@echo "$(GREEN)Cleanup complete$(NC)"
 
-# Run the application
 run: build
 	@if [ -f "./$(TARGET)" ]; then \
 		echo "$(GREEN)Running $(TARGET)...$(NC)"; \
@@ -449,7 +414,6 @@ run: build
 		exit 1; \
 	fi
 
-# Help
 help:
 	@echo "$(GREEN)Available targets:$(NC)"
 	@echo ""

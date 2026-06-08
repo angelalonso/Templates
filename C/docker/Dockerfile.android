@@ -1,5 +1,4 @@
 FROM ubuntu:22.04
-
 ENV DEBIAN_FRONTEND=noninteractive
 
 # ── System dependencies ───────────────────────────────────────────────────────
@@ -18,14 +17,12 @@ ENV ANDROID_NDK_HOME=$ANDROID_HOME/ndk/25.2.9519653
 ENV PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/build-tools/34.0.0
 
 RUN mkdir -p $ANDROID_HOME/cmdline-tools
-
 RUN wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip \
     -O /tmp/cmdline-tools.zip \
     && unzip -q /tmp/cmdline-tools.zip -d $ANDROID_HOME/cmdline-tools \
     && mv $ANDROID_HOME/cmdline-tools/cmdline-tools $ANDROID_HOME/cmdline-tools/latest \
     && rm /tmp/cmdline-tools.zip
 
-# Accept licenses and install required SDK components
 RUN yes | sdkmanager --licenses && \
     sdkmanager \
         "platforms;android-34" \
@@ -36,42 +33,34 @@ RUN yes | sdkmanager --licenses && \
 
 # ── Project build ─────────────────────────────────────────────────────────────
 WORKDIR /project
-
-# Copy project files into the image.
-# The entire repo root is the build context (see build-android.sh).
-# Note: Docker COPY does not follow symlinks — it copies them as broken links.
-# All symlinks are resolved with explicit cp commands below.
 COPY . .
 
 # ── Resolve symlinks broken by Docker COPY ────────────────────────────────────
-
-# C/C++ backend sources (symlinked into android/app/src/main/cpp/)
+# C/C++ backend sources (symlinked into src/android/app/src/main/cpp/)
 RUN cp --remove-destination \
-        /project/src/backend/api_handler.c    /project/android/app/src/main/cpp/api_handler.c    && \
+        /project/src/backend/api_handler.c     /project/src/android/app/src/main/cpp/api_handler.c    && \
     cp --remove-destination \
-        /project/src/backend/api_handler.h    /project/android/app/src/main/cpp/api_handler.h    && \
+        /project/src/backend/api_handler.h     /project/src/android/app/src/main/cpp/api_handler.h    && \
     cp --remove-destination \
-        /project/src/backend/config_manager.c /project/android/app/src/main/cpp/config_manager.c && \
+        /project/src/backend/config_manager.c  /project/src/android/app/src/main/cpp/config_manager.c && \
     cp --remove-destination \
-        /project/src/backend/config_manager.h /project/android/app/src/main/cpp/config_manager.h && \
+        /project/src/backend/config_manager.h  /project/src/android/app/src/main/cpp/config_manager.h && \
     cp --remove-destination \
-        /project/src/middleware/api_protocol.h /project/android/app/src/main/cpp/api_protocol.h
+        /project/src/middleware/api_protocol.h /project/src/android/app/src/main/cpp/api_protocol.h
 
-# Web assets (symlinked into android/app/src/main/assets/web/)
-RUN mkdir -p /project/android/app/src/main/assets/web && \
+# Web assets (symlinked into src/android/app/src/main/assets/web/)
+RUN mkdir -p /project/src/android/app/src/main/assets/web && \
     cp --remove-destination \
-        /project/src/web/index.html /project/android/app/src/main/assets/web/index.html && \
+        /project/src/web/index.html /project/src/android/app/src/main/assets/web/index.html && \
     cp --remove-destination \
-        /project/src/web/app.js     /project/android/app/src/main/assets/web/app.js     && \
+        /project/src/web/app.js     /project/src/android/app/src/main/assets/web/app.js     && \
     cp --remove-destination \
-        /project/src/web/style.css  /project/android/app/src/main/assets/web/style.css
+        /project/src/web/style.css  /project/src/android/app/src/main/assets/web/style.css
 
-# Make gradlew executable
-RUN chmod +x android/gradlew
+# Make gradlew executable and pre-fetch dependencies
+RUN chmod +x src/android/gradlew
 
-# Pre-fetch Gradle wrapper and dependencies so incremental builds are faster
-# (this layer is cached as long as build.gradle files don't change)
-WORKDIR /project/android
+WORKDIR /project/src/android
 RUN ./gradlew dependencies --no-daemon || true
 
 CMD ["./gradlew", "assembleDebug", "--no-daemon"]
